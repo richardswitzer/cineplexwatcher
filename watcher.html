@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cineplex Showtime Watcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+::selection { background: rgba(212,160,32,.35); }
+
+:root { --pulse-dur:2s; --flash-dur:600ms; --panel-dur:220ms; }
+@media (prefers-reduced-motion:reduce) { :root { --pulse-dur:0s; --flash-dur:0s; --panel-dur:0s; } }
+@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes flashNew { 0%{background:rgba(212,160,32,.18)} 100%{background:transparent} }
+
+/* ── Tokens ─────────────────────────────────── */
+:root {
+  --ground:#10121A; --surface:#1C1F2E; --surface2:#242738;
+  --amber:#D4A020;  --text:#F0EDE6;
+  --text2:#9E9A93;  --text3:#4A4F65; --rule:#2A2D3A;
+  --available:#4CAF7D; --low:#E8854A; --soldout:#C05050;
+  --onAmber:#10121A;
+}
+[data-theme="light"] {
+  --ground:#F5F2EC; --surface:#EAE7E0; --surface2:#E0DDD6;
+  --amber:#9A6E0A;  --text:#1A1814;
+  --text2:#6B6760;  --text3:#A09C97; --rule:#D8D4CB;
+  --onAmber:#F5F2EC;
+}
+
+/* ── Base ───────────────────────────────────── */
+#app {
+  background:var(--ground); color:var(--text);
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  transition:background .2s,color .2s;
+}
+.container { max-width:900px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
+@media(max-width:519px){.container{padding:1.5rem 1rem 3rem;}}
+
+/* ── Header ─────────────────────────────────── */
+.header-row {
+  display:flex; flex-wrap:wrap; gap:1.25rem;
+  justify-content:space-between; align-items:flex-start;
+}
+.title-block { flex:1 1 260px; min-width:0; }
+.display-title {
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+  font-size:clamp(2rem,5vw,3rem); line-height:1.02;
+}
+.subhead { font-size:.9rem; color:var(--text2); margin-top:.4rem; }
+
+.status-block {
+  display:flex; flex-direction:column;
+  align-items:flex-end; gap:.5rem; flex:0 0 auto;
+}
+@media(max-width:519px){.status-block{align-items:flex-start;}}
+.status-pill { display:flex; align-items:center; gap:.5rem; font-size:.85rem; }
+.dot {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--amber); display:inline-block;
+  animation:pulseDot var(--pulse-dur) ease-in-out infinite;
+}
+.dot.inactive { background:var(--text3); animation:none; }
+.last-checked {
+  font-family:'JetBrains Mono','Courier New',monospace;
+  font-size:.68rem; letter-spacing:.12em; color:var(--text3);
+  white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.btn-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+.btn {
+  font-size:.75rem; font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; padding:.5rem .85rem; border:none;
+}
+.btn-refresh { background:var(--amber); color:var(--onAmber); }
+.btn-refresh:disabled { background:var(--surface); color:var(--text2); cursor:default; opacity:.6; }
+.btn-filter {
+  background:transparent; color:var(--text2);
+  border:1px solid var(--rule); display:flex; align-items:center; gap:.4rem;
+}
+.btn-filter.active { color:var(--amber); border-color:var(--amber); }
+.btn-filter:hover:not(.active) { color:var(--text); border-color:var(--text2); }
+.btn-theme { background:transparent; color:var(--text2); border:1px solid var(--rule); }
+.btn-theme:hover { color:var(--text); border-color:var(--text2); }
+
+/* ── Divider ────────────────────────────────── */
+.divider { height:1px; background:var(--rule); margin:1.75rem 0; }
+@media(max-width:519px){.divider{margin:1.25rem 0;}}
+
+/* ── Filter panel ───────────────────────────── */
+.filter-panel {
+  overflow:hidden;
+  max-height:0;
+  transition:max-height var(--panel-dur) ease-out, margin var(--panel-dur) ease-out;
+  margin-bottom:0;
+}
+.filter-panel.open {
+  max-height:320px;
+  margin-bottom:1.75rem;
+  transition:max-height var(--panel-dur) ease-in, margin var(--panel-dur) ease-in;
+}
+@media(max-width:519px){.filter-panel.open{max-height:480px;}}
+
+.filter-inner {
+  background:var(--surface);
+  border-left:3px solid var(--amber);
+  padding:1.25rem 1.5rem 1.5rem;
+}
+.filter-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1.25rem;
+  margin-bottom:1.25rem;
+}
+@media(max-width:600px){.filter-grid{grid-template-columns:1fr;gap:.85rem;}}
+
+.filter-group { display:flex; flex-direction:column; gap:.35rem; }
+.filter-label {
+  font-family:'JetBrains Mono','Courier New',monospace;
+  font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--amber);
+}
+.filter-select {
+  appearance:none; -webkit-appearance:none;
+  background:transparent;
+  border:none; border-bottom:1px solid var(--rule);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:.9rem;
+  padding:.35rem 1.5rem .35rem 0;
+  cursor:pointer; width:100%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239E9A93'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 0 center;
+  transition:border-color .15s;
+}
+.filter-select:focus { outline:none; border-bottom-color:var(--amber); }
+.filter-select option { background:var(--ground); color:var(--text); }
+
+.filter-actions { display:flex; align-items:center; gap:.75rem; }
+.btn-apply {
+  background:var(--amber); color:var(--onAmber);
+  font-size:.75rem; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; padding:.55rem 1.1rem; border:none;
+}
+.btn-apply:hover { opacity:.9; }
+.filter-hint {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.68rem; color:var(--text3); letter-spacing:.04em;
+}
+
+/* ── Live badge ─────────────────────────────── */
+.data-badge {
+  display:inline-flex; align-items:center; gap:.35rem;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.62rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:.2rem .55rem;
+  border:1px solid var(--rule); color:var(--text3);
+  margin-left:.6rem; vertical-align:middle;
+}
+.data-badge.live { border-color:var(--available); color:var(--available); }
+.data-badge.mock { border-color:var(--text3); color:var(--text3); }
+
+/* ── Banners ────────────────────────────────── */
+.banner { padding:.85rem 1rem; font-size:.85rem; margin-bottom:1rem; }
+.banner-error {
+  background:rgba(192,80,80,.14);
+  border:1px solid var(--soldout); color:var(--soldout);
+}
+.banner-new {
+  background:var(--amber); color:var(--onAmber); font-weight:600;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.banner-dismiss {
+  background:none; border:none; color:inherit;
+  font-size:1.1rem; cursor:pointer; line-height:1; padding:0 .25rem;
+}
+
+/* ── Summary ────────────────────────────────── */
+.summary-row { margin-bottom:1.5rem; }
+.zero-state { border:1px solid var(--amber); color:var(--amber); padding:1rem; font-size:.9rem; }
+.summary-label { font-size:.68rem; letter-spacing:.12em; color:var(--text3); text-transform:uppercase; }
+.summary-count {
+  font-family:'JetBrains Mono','Courier New',monospace;
+  font-size:2.25rem; font-weight:600; font-variant-numeric:tabular-nums;
+}
+
+/* ── Pills ──────────────────────────────────── */
+.pill { font-size:.6rem; font-weight:600; letter-spacing:.08em; padding:.1rem .4rem; line-height:1.4; }
+.pill-new { background:var(--amber); color:var(--onAmber); }
+.pill-low { border:1px solid var(--low); color:var(--low); background:transparent; }
+
+/* ── Ticket grid ────────────────────────────── */
+.ticket-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:.9rem;
+}
+@media(max-width:519px){.ticket-grid{grid-template-columns:1fr;}}
+.ticket {
+  background:var(--surface); padding:1rem 1.1rem;
+  display:flex; flex-direction:column; gap:.35rem;
+  cursor:pointer; transition:outline .1s;
+}
+.ticket.sold-out { opacity:.45; cursor:default; }
+.ticket:not(.sold-out):hover { outline:1px solid var(--amber); }
+.ticket.is-new { animation:flashNew var(--flash-dur) ease-out; }
+.ticket-top-row { display:flex; align-items:center; gap:.5rem; justify-content:space-between; }
+.ticket-date { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--text2); font-variant-numeric:tabular-nums; }
+.ticket-time { font-family:'JetBrains Mono',monospace; font-size:1.35rem; font-weight:600; font-variant-numeric:tabular-nums; }
+.ticket.sold-out .ticket-time { text-decoration:line-through; }
+.ticket-fmt { font-size:.82rem; color:var(--text2); }
+.ticket-bottom-row { display:flex; align-items:center; gap:.5rem; justify-content:space-between; margin-top:.25rem; }
+.ticket-posted { font-family:'JetBrains Mono',monospace; font-size:.66rem; color:var(--text3); font-variant-numeric:tabular-nums; }
+.seats-num { font-family:'JetBrains Mono',monospace; font-size:.8rem; font-weight:600; font-variant-numeric:tabular-nums; }
+.seats-available { color:var(--available); }
+.seats-low       { color:var(--low); }
+.seats-soldout   { color:var(--soldout); }
+.border-available { border-left:4px solid var(--available); }
+.border-low       { border-left:4px solid var(--low); }
+.border-soldout   { border-left:4px solid var(--soldout); }
+
+/* ── Footer ─────────────────────────────────── */
+.footer-note { margin-top:2rem; font-size:.75rem; color:var(--text3); }
+</style>
+</head>
+<body>
+<div id="app" data-theme="dark">
+  <div class="container">
+
+    <header class="header-row">
+      <div class="title-block">
+        <div class="display-title" id="movieTitle"></div>
+        <div class="subhead" id="movieSub"></div>
+      </div>
+      <div class="status-block">
+        <div class="status-pill">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Checking…</span>
+          <span class="data-badge mock" id="dataBadge">Demo</span>
+        </div>
+        <div class="last-checked" id="lastChecked">LAST CHECKED —</div>
+        <div class="btn-row">
+          <button class="btn btn-filter" id="btnFilter" onclick="toggleFilter()">
+            <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect y="0" width="13" height="1.5" fill="currentColor"/>
+              <rect x="2" y="4" width="9" height="1.5" fill="currentColor"/>
+              <rect x="4" y="8" width="5" height="1.5" fill="currentColor"/>
+            </svg>
+            Filter
+          </button>
+          <button class="btn btn-refresh" id="btnRefresh" onclick="onRefresh()">Refresh</button>
+          <button class="btn btn-theme" id="btnTheme" onclick="toggleTheme()">Light</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="divider"></div>
+
+    <!-- Filter panel -->
+    <div class="filter-panel" id="filterPanel">
+      <div class="filter-inner">
+        <div class="filter-grid">
+          <div class="filter-group">
+            <span class="filter-label">Film</span>
+            <select class="filter-select" id="filmSelect"></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Theatre</span>
+            <select class="filter-select" id="theatreSelect" onchange="onTheatreChange()"></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Format</span>
+            <select class="filter-select" id="formatSelect"></select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-apply" onclick="applyFilter()">Watch this</button>
+          <span class="filter-hint" id="filterHint"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="errorBanner" class="banner banner-error" style="display:none"></div>
+    <div id="newBanner" class="banner banner-new" style="display:none">
+      <span id="newBannerText"></span>
+      <button class="banner-dismiss" onclick="dismissNewBanner()" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <div class="summary-row" id="summaryRow"></div>
+    <div id="sessionsView"></div>
+
+    <div class="footer-note">
+      Auto-refreshes every 5 min while tab is visible · 60s minimum between manual refreshes ·
+      Live data requires a server proxy — see <code>cineplex-api-smoke-test/</code> for the confirmed API endpoint.
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────
+   API CONFIG
+   When a server proxy is running at /api/showtimes,
+   set USE_LIVE_API = true. The proxy must forward:
+     GET /api/showtimes?filmId=X&theatreId=Y&language=en
+   to the Cineplex API with the subscription key header.
+───────────────────────────────────────────────────── */
+const USE_LIVE_API = true;
+const API_PROXY    = '/.netlify/functions/showtimes';
+
+/* ── Catalogue (mock data / fallback) ───────────────── */
+const CATALOGUE = [
+  {
+    film:'The Odyssey', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
+    filmId:'37617', theatreId:'7402',
+    sessions:[
+      {id:'VS100201',date:'2026-07-18',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:16, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-76*3600000},
+      {id:'VS100202',date:'2026-07-18',time:'11:00 PM',fmt:'IMAX, Laser Projection',seats:46, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-30*3600000},
+      {id:'VS100203',date:'2026-07-19',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:54, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-50*3600000},
+      {id:'VS100204',date:'2026-07-19',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:50, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-96*3600000},
+      {id:'VS100205',date:'2026-07-19',time:'11:00 PM',fmt:'IMAX, Laser Projection',seats:95, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
+      {id:'VS100206',date:'2026-07-20',time:'02:30 PM',fmt:'IMAX, Laser Projection',seats:12, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-6*3600000},
+      {id:'VS100207',date:'2026-07-20',time:'06:30 PM',fmt:'IMAX, Laser Projection',seats:0,  soldOut:true, bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-130*3600000},
+      {id:'VS100208',date:'2026-07-21',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:105,soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-20*3600000},
+      {id:'VS100209',date:'2026-07-21',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:27, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-40*3600000},
+    ]
+  },
+  {
+    film:'The Odyssey', theatre:'Cineplex Cinemas Yonge-Dundas', format:'IMAX',
+    filmId:'37617', theatreId:'1001',
+    sessions:[
+      {id:'VS200101',date:'2026-07-18',time:'06:30 PM',fmt:'IMAX, Laser Projection',seats:33,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-48*3600000},
+      {id:'VS200102',date:'2026-07-19',time:'09:00 AM',fmt:'IMAX, Laser Projection',seats:72,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-24*3600000},
+      {id:'VS200103',date:'2026-07-19',time:'04:45 PM',fmt:'IMAX, Laser Projection',seats:8, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-60*3600000},
+      {id:'VS200104',date:'2026-07-20',time:'07:15 PM',fmt:'IMAX, Laser Projection',seats:0, soldOut:true, bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-110*3600000},
+      {id:'VS200105',date:'2026-07-21',time:'12:30 PM',fmt:'IMAX, Laser Projection',seats:88,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-18*3600000},
+    ]
+  },
+  {
+    film:'The Odyssey', theatre:'Scotiabank Theatre Toronto', format:'Standard',
+    filmId:'37617', theatreId:'7402',
+    sessions:[
+      {id:'VS300101',date:'2026-07-18',time:'12:00 PM',fmt:'Standard',seats:142,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-72*3600000},
+      {id:'VS300102',date:'2026-07-18',time:'03:30 PM',fmt:'Standard',seats:211,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-72*3600000},
+      {id:'VS300103',date:'2026-07-19',time:'06:00 PM',fmt:'Standard',seats:67, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-48*3600000},
+    ]
+  },
+  {
+    film:'Superman: Legacy', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
+    filmId:'38100', theatreId:'7402',
+    sessions:[
+      {id:'VS400101',date:'2026-07-18',time:'05:00 PM',fmt:'IMAX, Laser Projection',seats:3, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
+      {id:'VS400102',date:'2026-07-18',time:'09:30 PM',fmt:'IMAX, Laser Projection',seats:0, soldOut:true, bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
+      {id:'VS400103',date:'2026-07-19',time:'02:00 PM',fmt:'IMAX, Laser Projection',seats:18,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
+    ]
+  },
+  {
+    film:'Superman: Legacy', theatre:'SilverCity Mississauga Cinemas', format:'IMAX',
+    filmId:'38100', theatreId:'2201',
+    sessions:[
+      {id:'VS500101',date:'2026-07-18',time:'04:15 PM',fmt:'IMAX, Laser Projection',seats:61,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
+      {id:'VS500102',date:'2026-07-19',time:'07:30 PM',fmt:'IMAX, Laser Projection',seats:44,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
+      {id:'VS500103',date:'2026-07-20',time:'10:00 AM',fmt:'IMAX, Laser Projection',seats:97,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
+    ]
+  },
+  {
+    film:'Jurassic World Rebirth', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
+    filmId:'38200', theatreId:'7402',
+    sessions:[
+      {id:'VS600101',date:'2026-07-19',time:'10:00 AM',fmt:'IMAX, Laser Projection',seats:128,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
+      {id:'VS600102',date:'2026-07-19',time:'01:30 PM',fmt:'IMAX, Laser Projection',seats:77, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
+      {id:'VS600103',date:'2026-07-20',time:'04:00 PM',fmt:'IMAX, Laser Projection',seats:19, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
+    ]
+  },
+  {
+    film:'Jurassic World Rebirth', theatre:'SilverCity Mississauga Cinemas', format:'IMAX',
+    filmId:'38200', theatreId:'2201',
+    sessions:[
+      {id:'VS700101',date:'2026-07-19',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:90,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-8*3600000},
+      {id:'VS700102',date:'2026-07-20',time:'02:15 PM',fmt:'IMAX, Laser Projection',seats:5, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-8*3600000},
+    ]
+  },
+];
+
+/* ── Derived helpers ────────────────────────────────── */
+const FILMS         = [...new Set(CATALOGUE.map(c => c.film))];
+const theatresFor   = f  => [...new Set(CATALOGUE.filter(c => c.film===f).map(c => c.theatre))];
+const formatsFor    = (f,t) => [...new Set(CATALOGUE.filter(c => c.film===f && c.theatre===t).map(c => c.format))];
+const catalogueEntry= (f,t,fmt) => CATALOGUE.find(c => c.film===f && c.theatre===t && c.format===fmt);
+
+/* ── State ──────────────────────────────────────────── */
+const watch = {
+  film:    FILMS[0],
+  theatre: theatresFor(FILMS[0])[0],
+  format:  formatsFor(FILMS[0], theatresFor(FILMS[0])[0])[0],
+};
+
+const state = {
+  theme:'dark', filterOpen:false,
+  isLive:false,
+  loading:false, lastChecked:Date.now(),
+  cooldownUntil:0, nowTick:Date.now(),
+  newIds:[], newBannerDismissed:false, error:null,
+  sessions:[],
+};
+
+function currentEntry() { return catalogueEntry(watch.film, watch.theatre, watch.format); }
+
+/* ── Filter panel ───────────────────────────────────── */
+function toggleFilter() {
+  state.filterOpen = !state.filterOpen;
+  document.getElementById('filterPanel').classList.toggle('open', state.filterOpen);
+  document.getElementById('btnFilter').classList.toggle('active', state.filterOpen);
+  if (state.filterOpen) syncFilterSelects();
+}
+
+function syncFilterSelects() {
+  const fSel = document.getElementById('filmSelect');
+  fSel.innerHTML = FILMS.map(f => `<option${f===watch.film?' selected':''}>${f}</option>`).join('');
+  syncTheatreSelect();
+}
+function syncTheatreSelect() {
+  const f = document.getElementById('filmSelect').value;
+  const opts = theatresFor(f);
+  const tSel = document.getElementById('theatreSelect');
+  tSel.innerHTML = opts.map(t => `<option${t===watch.theatre&&f===watch.film?' selected':''}>${t}</option>`).join('');
+  syncFormatSelect();
+}
+function syncFormatSelect() {
+  const f  = document.getElementById('filmSelect').value;
+  const t  = document.getElementById('theatreSelect').value;
+  const opts = formatsFor(f, t);
+  const fmtSel = document.getElementById('formatSelect');
+  fmtSel.innerHTML = opts.map(fmt => `<option${fmt===watch.format&&f===watch.film&&t===watch.theatre?' selected':''}>${fmt}</option>`).join('');
+  updateFilterHint(f, t, fmtSel.value);
+}
+function onTheatreChange() { syncFormatSelect(); }
+
+function updateFilterHint(f, t, fmt) {
+  const entry = catalogueEntry(f, t, fmt);
+  const count = entry ? entry.sessions.filter(s=>s.bookable).length : 0;
+  document.getElementById('filterHint').textContent =
+    entry ? `${count} session${count!==1?'s':''} in demo data` : 'No demo data for this combination';
+}
+
+function applyFilter() {
+  watch.film    = document.getElementById('filmSelect').value;
+  watch.theatre = document.getElementById('theatreSelect').value;
+  watch.format  = document.getElementById('formatSelect').value;
+  state.filterOpen = false;
+  document.getElementById('filterPanel').classList.remove('open');
+  document.getElementById('btnFilter').classList.remove('active');
+  state.newIds = []; state.newBannerDismissed = false; state.error = null;
+  loadSessions();
+}
+
+/* ── Data loading ───────────────────────────────────── */
+async function loadSessions() {
+  if (USE_LIVE_API) {
+    await fetchLive();
+  } else {
+    loadMock();
+  }
+}
+
+function loadMock() {
+  const entry = currentEntry();
+  state.sessions = entry ? entry.sessions.filter(s=>s.bookable).map(s=>({...s})) : [];
+  state.isLive = false;
+  state.lastChecked = Date.now();
+  render();
+}
+
+async function fetchLive() {
+  const entry = currentEntry();
+  if (!entry) { loadMock(); return; }
+  state.loading = true; render();
+  try {
+    const res = await fetch(`${API_PROXY}?filmId=${entry.filmId}&theatreId=${entry.theatreId}&language=en`);
+    if (res.status === 429) throw new Error('rate-limited');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    // Normalise Cineplex response shape
+    const arr = Array.isArray(data) ? data : Object.values(data);
+    const theatreEntry = arr.find(t => String(t.theatreId) === String(entry.theatreId));
+    const sessions = [];
+    if (theatreEntry) {
+      for (const dateEntry of theatreEntry.dates || []) {
+        for (const movie of dateEntry.movies || []) {
+          for (const exp of movie.experiences || []) {
+            const expName = (exp.experienceTypes || []).join(', ') || movie.presentationType;
+            if (watch.format !== 'Standard' && !expName.toUpperCase().includes(watch.format.toUpperCase())) continue;
+            for (const sess of exp.sessions || []) {
+              if (!sess.isShowtimeEnabledOnline) continue;
+              const dt = new Date(sess.showStartDateTime);
+              sessions.push({
+                id:       String(sess.vistaSessionId),
+                date:     dt.toISOString().slice(0,10),
+                time:     dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+                fmt:      expName,
+                seats:    sess.seatsRemaining,
+                soldOut:  sess.isSoldOut,
+                bookable: true,
+                url:      sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
+                posted:   Date.now(),
+              });
+            }
+          }
+        }
+      }
+    }
+    const prevIds = new Set(state.sessions.map(s=>s.id));
+    state.sessions = sessions;
+    state.newIds = sessions.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
+    state.newBannerDismissed = false;
+    state.error = null;
+    state.isLive = true;
+    state.lastChecked = Date.now();
+    state.cooldownUntil = Date.now() + 60000;
+  } catch(e) {
+    state.error = { at: state.lastChecked, msg: e.message };
+    state.isLive = false;
+  }
+  state.loading = false;
+  render();
+}
+
+/* ── Refresh ────────────────────────────────────────── */
+function onRefresh() { doRefresh(false); }
+function doRefresh(auto) {
+  if (state.loading) return;
+  if (Date.now() < state.cooldownUntil) return;
+  if (auto && document.visibilityState==='hidden') return;
+  if (USE_LIVE_API) { fetchLive(); return; }
+  // Mock: simulate seat changes + occasional new session
+  state.loading = true; render();
+  setTimeout(() => {
+    if (Math.random() < 0.1) {
+      state.error = { at: state.lastChecked, msg:'simulated error' };
+      state.cooldownUntil = Date.now() + 60000;
+    } else {
+      const prevIds = new Set(state.sessions.map(s=>s.id));
+      const list = state.sessions.map(s=>({...s}));
+      const open = list.filter(s=>!s.soldOut);
+      if (open.length) {
+        const t = list.find(s=>s.id===open[Math.floor(Math.random()*open.length)].id);
+        t.seats = Math.max(0, t.seats - (2 + Math.floor(Math.random()*5)));
+        if (t.seats===0) t.soldOut = true;
+      }
+      if (Math.random() < 0.35) {
+        const dates=['2026-07-24','2026-07-25','2026-07-26'];
+        const times=['01:15 PM','04:30 PM','09:45 PM'];
+        list.push({
+          id:'VS'+Math.floor(100000+Math.random()*900000),
+          date:dates[Math.floor(Math.random()*dates.length)],
+          time:times[Math.floor(Math.random()*times.length)],
+          fmt:'IMAX, Laser Projection',
+          seats:40+Math.floor(Math.random()*80),
+          soldOut:false, bookable:true,
+          url:'https://www.cineplex.com/', posted:Date.now()
+        });
+      }
+      state.sessions = list;
+      state.newIds = list.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
+      state.newBannerDismissed = false;
+      state.error = null;
+      state.lastChecked = Date.now();
+      state.cooldownUntil = Date.now() + 60000;
+    }
+    state.loading = false;
+    render();
+  }, 600);
+}
+
+function dismissNewBanner() { state.newBannerDismissed = true; render(); }
+
+function toggleTheme() {
+  state.theme = state.theme==='dark' ? 'light' : 'dark';
+  document.getElementById('app').setAttribute('data-theme', state.theme);
+  document.getElementById('btnTheme').textContent = state.theme==='dark' ? 'Light' : 'Dark';
+}
+
+/* ── Render helpers ─────────────────────────────────── */
+function fmtDate(d) {
+  return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'2-digit'}).toUpperCase();
+}
+function parseTime(s) {
+  const [time,ap] = s.time.split(' ');
+  let [h,m] = time.split(':').map(Number);
+  if(ap==='PM'&&h!==12)h+=12; if(ap==='AM'&&h===12)h=0;
+  const d=new Date(s.date+'T00:00:00'); d.setHours(h,m); return d.getTime();
+}
+function fmtPosted(t,now) {
+  const ms=Math.max(0,now-t), days=Math.floor(ms/86400000);
+  const hrs=((ms-days*86400000)/3600000).toFixed(1);
+  return days>0?`${days}d ${hrs}h ago`:`${hrs}h ago`;
+}
+function seatsClass(s) { return s.soldOut?'seats-soldout':s.seats<=20?'seats-low':'seats-available'; }
+function borderClass(s) { return s.soldOut?'border-soldout':s.seats<=20?'border-low':'border-available'; }
+function seatsLabel(s)  { return s.soldOut?'SOLD OUT':String(s.seats); }
+function pill(cls,txt)  { return `<span class="pill ${cls}">${txt}</span>`; }
+
+/* ── Render ─────────────────────────────────────────── */
+function render() {
+  const s = state;
+  const now = s.nowTick;
+  const cooldownLeft = Math.max(0, Math.ceil((s.cooldownUntil - now) / 1000));
+  const refreshDisabled = s.loading || cooldownLeft > 0;
+  const rows = [...s.sessions].sort((a,b)=>parseTime(a)-parseTime(b));
+  const count = rows.length;
+
+  document.getElementById('movieTitle').textContent = watch.film.toUpperCase();
+  document.getElementById('movieSub').textContent   = `${watch.theatre} · ${watch.format}`;
+
+  document.getElementById('statusDot').className = 'dot'+(count===0?' inactive':'');
+  document.getElementById('statusText').textContent = count===0
+    ? 'No sessions found'
+    : `Available — ${count} session${count!==1?'s':''}`;
+
+  const badge = document.getElementById('dataBadge');
+  if (s.isLive) { badge.textContent='Live'; badge.className='data-badge live'; }
+  else          { badge.textContent='Demo'; badge.className='data-badge mock'; }
+
+  document.getElementById('lastChecked').textContent =
+    'LAST CHECKED '+new Date(s.lastChecked).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  const btn = document.getElementById('btnRefresh');
+  btn.disabled = refreshDisabled;
+  btn.textContent = s.loading?'Refreshing…':cooldownLeft>0?`Refresh (${cooldownLeft}s)`:'Refresh';
+
+  const errEl = document.getElementById('errorBanner');
+  if (s.error) {
+    errEl.style.display='block';
+    errEl.textContent=`Could not reach Cineplex API — last data from ${new Date(s.error.at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}.`;
+  } else { errEl.style.display='none'; }
+
+  const newEl = document.getElementById('newBanner');
+  if (s.newIds.length>0 && !s.newBannerDismissed) {
+    newEl.style.display='flex';
+    document.getElementById('newBannerText').textContent=
+      `${s.newIds.length} new session${s.newIds.length!==1?'s':''} detected since last check`;
+  } else { newEl.style.display='none'; }
+
+  document.getElementById('summaryRow').innerHTML = count===0
+    ? `<div class="zero-state">No ${watch.format} sessions found at this time.</div>`
+    : `<div class="summary-label">Matching Screenings</div><div class="summary-count">${count}</div>`;
+
+  document.getElementById('sessionsView').innerHTML = count===0 ? '' :
+    `<div class="ticket-grid">${rows.map(s=>{
+      const isNew=state.newIds.includes(s.id), isLow=!s.soldOut&&s.seats<=20;
+      return `<div class="ticket ${borderClass(s)}${s.soldOut?' sold-out':''}${isNew?' is-new':''}"
+                   onclick="${s.soldOut?'':  `window.open('${s.url}','_blank')`}">
+        <div class="ticket-top-row">
+          <span class="ticket-date">${fmtDate(s.date)}</span>
+          ${isNew?pill('pill-new','NEW'):''}
+        </div>
+        <div class="ticket-time">${s.time}</div>
+        <div class="ticket-fmt">${s.fmt}</div>
+        <div class="ticket-bottom-row">
+          <span class="seats-num ${seatsClass(s)}">${seatsLabel(s)}</span>
+          ${isLow?pill('pill-low','LOW'):''}
+          <span class="ticket-posted">${fmtPosted(s.posted,now)}</span>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+/* ── Init ───────────────────────────────────────────── */
+loadSessions();
+setInterval(()=>{ state.nowTick=Date.now(); render(); }, 1000);
+setInterval(()=>doRefresh(true), 300000);
+window.addEventListener('resize', render);
+</script>
+</body>
+</html>
