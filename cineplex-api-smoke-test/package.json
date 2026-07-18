@@ -1,0 +1,26 @@
+{
+  "name": "cineplex-api-smoke-test",
+  "version": "0.1.0",
+  "description": "Exploration and smoke-test of Cineplex public showtime APIs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "discover": "tsx src/discover-network.ts",
+    "inspect": "tsx src/inspect-page.ts",
+    "smoke": "tsx src/smoke-test.ts",
+    "test": "vitest run",
+    "explore": "npm run discover && npm run inspect && npm run smoke"
+  },
+  "dependencies": {
+    "playwright": "^1.52.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
