@@ -10,7 +10,7 @@ function get(url) {
     const req = https.get(url, {
       headers: {
         Accept: 'application/json',
-        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Encoding': 'identity',
         'Ocp-Apim-Subscription-Key': SUB_KEY,
         Origin: 'https://www.cineplex.com',
         Referer: 'https://www.cineplex.com/',
