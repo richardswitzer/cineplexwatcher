@@ -312,14 +312,10 @@ button { font-family: inherit; cursor: pointer; }
 
       <!-- Film -->
       <div class="setup-section">
-        <div class="setup-section-title">Film</div>
-        <div class="film-url-row">
-          <input class="film-url-input" type="text" id="filmUrlInput"
-            placeholder="Paste Cineplex film URL — e.g. cineplex.com/film/the-odyssey/37617"
-            oninput="onFilmInputChange()">
-          <button class="btn-small" id="btnLoadTheatres" onclick="loadTheatres()" disabled>Load theatres</button>
-        </div>
-        <div id="filmFoundMsg" style="display:none" class="film-found"></div>
+        <div class="setup-section-title">Film <span id="filmsLoadingSpinner" class="spinner" style="display:none"></span></div>
+        <select class="filter-select" id="filmSelect" onchange="onFilmSelect()" style="width:100%;font-size:.95rem;padding:.5rem 1.5rem .5rem 0">
+          <option value="">Loading now playing…</option>
+        </select>
       </div>
 
       <!-- Theatres -->
@@ -411,6 +407,7 @@ const SUPABASE_ANON = 'sb_publishable_bAcMX_QyJUe_G1NXAsVXmw_ZssU11LV';
 const API_PROXY     = '/.netlify/functions/showtimes';
 const WATCH_API     = '/.netlify/functions/watch';
 const THEATRES_API  = '/.netlify/functions/theatres';
+const FILMS_API     = '/.netlify/functions/films';
 
 /* ── Supabase client ─────────────────────────────────── */
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
@@ -493,67 +490,55 @@ async function loadSavedWatch() {
 }
 
 /* ── Setup form ─────────────────────────────────────── */
-function onFilmInputChange() {
-  const val = document.getElementById('filmUrlInput').value.trim();
-  const parsed = parseFilmInput(val);
-  document.getElementById('btnLoadTheatres').disabled = !parsed;
-  if (!parsed) {
-    document.getElementById('filmFoundMsg').style.display = 'none';
-    document.getElementById('theatreSection').style.display = 'none';
-    document.getElementById('formatSection').style.display = 'none';
-    document.getElementById('phoneSection').style.display = 'none';
-    document.getElementById('btnSaveWatch').style.display = 'none';
+async function loadFilmsList() {
+  const sel = document.getElementById('filmSelect');
+  const spinner = document.getElementById('filmsLoadingSpinner');
+  spinner.style.display = 'inline-block';
+  try {
+    const res = await fetch(FILMS_API);
+    const films = res.ok ? await res.json() : [];
+    if (films.length > 0) {
+      sel.innerHTML = '<option value="">— Choose a film —</option>' +
+        films.map(f => `<option value="${f.filmId}" data-name="${f.name.replace(/"/g,'&quot;')}">${f.name}</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="">No films found — try again later</option>';
+    }
+  } catch(_) {
+    sel.innerHTML = '<option value="">Could not load films</option>';
   }
+  spinner.style.display = 'none';
 }
 
-function parseFilmInput(input) {
-  const urlMatch = input.match(/\/film\/([^/?#]+)\/(\d+)/i);
-  if (urlMatch) {
-    const name = urlMatch[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    return { filmId: urlMatch[2], filmName: name };
-  }
-  if (/^\d{4,6}$/.test(input.trim())) return { filmId: input.trim(), filmName: '' };
-  return null;
-}
+async function onFilmSelect() {
+  const sel = document.getElementById('filmSelect');
+  const filmId = sel.value;
+  if (!filmId) return;
+  parsedFilmId   = filmId;
+  parsedFilmName = sel.options[sel.selectedIndex].dataset.name || sel.options[sel.selectedIndex].text;
 
-async function loadTheatres() {
-  const val    = document.getElementById('filmUrlInput').value.trim();
-  const parsed = parseFilmInput(val);
-  if (!parsed) return;
-
-  parsedFilmId   = parsed.filmId;
-  parsedFilmName = parsed.filmName;
-
-  const btn = document.getElementById('btnLoadTheatres');
-  btn.disabled = true; btn.textContent = 'Loading…';
-
-  document.getElementById('theatreList').innerHTML = '<div class="theatre-loading">Loading theatres… <span class="spinner"></span></div>';
+  selectedTheatreIds = []; selectedTheatreNames = [];
   document.getElementById('theatreSection').style.display = 'block';
+  document.getElementById('theatreList').innerHTML = '<div class="theatre-loading">Loading theatres… <span class="spinner"></span></div>';
+  document.getElementById('formatSection').style.display = 'none';
+  document.getElementById('phoneSection').style.display = 'none';
+  document.getElementById('btnSaveWatch').style.display = 'none';
 
   let theatres = [];
   try {
     const res = await fetch(`${THEATRES_API}?filmId=${parsedFilmId}`);
     if (res.ok) theatres = await res.json();
-  } catch(e) {}
+  } catch(_) {}
 
   if (theatres.length === 0) {
-    document.getElementById('theatreList').innerHTML = '<div class="theatre-loading" style="color:var(--soldout)">No theatres found for that film ID. Double-check the URL.</div>';
-    btn.disabled = false; btn.textContent = 'Load theatres';
+    document.getElementById('theatreList').innerHTML = '<div class="theatre-loading" style="color:var(--soldout)">No theatres found for this film.</div>';
     return;
   }
 
-  // Show film name if we parsed it
-  if (parsedFilmName) {
-    document.getElementById('filmFoundMsg').innerHTML = `<strong>${parsedFilmName}</strong> · Film ID ${parsedFilmId}`;
-    document.getElementById('filmFoundMsg').style.display = 'block';
-  }
-
   renderTheatreList(theatres);
+  document.getElementById('theatreHint').textContent = 'Select up to 5 theatres to monitor.';
   document.getElementById('formatSection').style.display = 'block';
   document.getElementById('phoneSection').style.display = 'block';
   document.getElementById('btnSaveWatch').style.display = 'block';
-  document.getElementById('theatreHint').textContent = 'Select up to 5 theatres to monitor.';
-  btn.disabled = false; btn.textContent = 'Reload';
 }
 
 function renderTheatreList(theatres) {
@@ -592,17 +577,16 @@ function selectFormat(btn, fmt) {
 }
 
 function resetSetupForm() {
-  document.getElementById('filmUrlInput').value = '';
-  document.getElementById('filmFoundMsg').style.display = 'none';
+  document.getElementById('filmSelect').value = '';
   document.getElementById('theatreSection').style.display = 'none';
   document.getElementById('formatSection').style.display = 'none';
   document.getElementById('phoneSection').style.display = 'none';
   document.getElementById('btnSaveWatch').style.display = 'none';
   document.getElementById('setupError').style.display = 'none';
   document.getElementById('phoneInput').value = '';
-  document.getElementById('btnLoadTheatres').disabled = true;
   selectedTheatreIds = []; selectedTheatreNames = [];
   parsedFilmId = ''; parsedFilmName = '';
+  loadFilmsList();
 }
 
 async function saveWatch() {
@@ -810,6 +794,7 @@ async function init() {
     startWatcher();
   } else {
     showView('viewSetup');
+    loadFilmsList();
   }
 }
 

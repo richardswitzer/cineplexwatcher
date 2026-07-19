@@ -6,7 +6,9 @@ const API_PATH = '/prod/cpx/theatrical/api/v1/showtimes';
 const SUB_KEY  = process.env.CINEPLEX_API_KEY || 'dcdac5601d864addbc2675a2e96cb1f8';
 
 function getRaw(filmId, theatreId) {
-  const url = `https://${API_HOST}${API_PATH}?filmId=${encodeURIComponent(filmId)}&theatreId=${encodeURIComponent(theatreId)}&language=en`;
+  const params = new URLSearchParams({ theatreId, language: 'en' });
+  if (filmId) params.set('filmId', filmId);
+  const url = `https://${API_HOST}${API_PATH}?${params}`;
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
       headers: {
@@ -37,7 +39,7 @@ function decompress(raw, encoding) {
 }
 
 async function fetchParsed(filmId, theatreId) {
-  const { status, headers, raw } = await getRaw(filmId, theatreId);
+  const { status, headers, raw } = await getRaw(filmId || '', theatreId);
   if (status !== 200) throw new Error(`Cineplex API returned ${status}`);
   const enc = (headers['content-encoding'] || '').toLowerCase();
   let buf;
