@@ -1,2 +1,5 @@
 *.env.md
 *.env
+
+# Local Netlify folder
+.netlify
