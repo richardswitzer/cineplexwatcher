@@ -308,40 +308,38 @@ button { font-family: inherit; cursor: pointer; }
   <div id="viewSetup" class="auth-overlay" style="display:none;align-items:flex-start">
     <div style="max-width:560px;width:100%;padding:2.5rem 0">
       <div class="auth-logo" style="margin-bottom:.25rem">Set up your alert</div>
-      <div class="auth-tagline">Pick a film, choose up to 5 theatres, and we'll text you the moment new showtimes appear.</div>
+      <div class="auth-tagline">Watch one film across up to 5 Toronto-area theatres. We'll text you the moment a new showtime is posted.</div>
 
-      <!-- Film -->
+      <!-- Step 1: Film -->
       <div class="setup-section">
-        <div class="setup-section-title">Film <span id="filmsLoadingSpinner" class="spinner" style="display:none"></span></div>
+        <div class="setup-section-title">
+          1 · Now Playing
+          <span id="filmsLoadingSpinner" class="spinner" style="display:none"></span>
+        </div>
         <select class="filter-select" id="filmSelect" onchange="onFilmSelect()" style="width:100%;font-size:.95rem;padding:.5rem 1.5rem .5rem 0">
-          <option value="">Loading now playing…</option>
+          <option value="">Loading…</option>
         </select>
       </div>
 
-      <!-- Theatres -->
+      <!-- Step 2: Theatres -->
       <div class="setup-section" id="theatreSection" style="display:none">
-        <div class="setup-section-title">Theatres <span style="color:var(--text3);font-weight:normal">(choose up to 5)</span></div>
+        <div class="setup-section-title">2 · Theatres near Toronto <span style="color:var(--text3);font-weight:normal">(choose up to 5)</span></div>
         <div id="theatreList" class="theatre-list"></div>
         <div class="theatre-hint" id="theatreHint"></div>
       </div>
 
-      <!-- Format -->
+      <!-- Step 3: Format filter -->
       <div class="setup-section" id="formatSection" style="display:none">
-        <div class="setup-section-title">Format</div>
-        <div class="format-row" id="formatRow">
-          <button class="format-btn selected" onclick="selectFormat(this,'IMAX')">IMAX</button>
-          <button class="format-btn" onclick="selectFormat(this,'ULTRAScreen')">ULTRAScreen</button>
-          <button class="format-btn" onclick="selectFormat(this,'D-BOX')">D-BOX</button>
-          <button class="format-btn" onclick="selectFormat(this,'Standard')">Standard</button>
-        </div>
+        <div class="setup-section-title">3 · Alert me for</div>
+        <div class="format-row" id="formatRow"></div>
       </div>
 
       <!-- Phone -->
       <div class="setup-section" id="phoneSection" style="display:none">
-        <div class="setup-section-title">SMS alerts</div>
+        <div class="setup-section-title">4 · SMS number <span style="color:var(--text3);font-weight:normal">(optional)</span></div>
         <div class="phone-row">
           <input class="auth-input" type="tel" id="phoneInput" placeholder="+1 416 555 0100" autocomplete="tel">
-          <div class="phone-hint">E.164 format (+1XXXXXXXXXX). Leave blank to skip SMS.</div>
+          <div class="phone-hint">Include country code. Leave blank to skip SMS alerts.</div>
         </div>
       </div>
 
@@ -517,28 +515,54 @@ async function onFilmSelect() {
   parsedFilmName = sel.options[sel.selectedIndex].dataset.name || sel.options[sel.selectedIndex].text;
 
   selectedTheatreIds = []; selectedTheatreNames = [];
+  selectedFormat = '';
   document.getElementById('theatreSection').style.display = 'block';
   document.getElementById('theatreList').innerHTML = '<div class="theatre-loading">Loading theatres… <span class="spinner"></span></div>';
   document.getElementById('formatSection').style.display = 'none';
   document.getElementById('phoneSection').style.display = 'none';
   document.getElementById('btnSaveWatch').style.display = 'none';
 
-  let theatres = [];
+  let theatres = [], formats = [];
   try {
     const res = await fetch(`${THEATRES_API}?filmId=${parsedFilmId}`);
-    if (res.ok) theatres = await res.json();
+    if (res.ok) { const d = await res.json(); theatres = d.theatres || []; formats = d.formats || []; }
   } catch(_) {}
 
   if (theatres.length === 0) {
-    document.getElementById('theatreList').innerHTML = '<div class="theatre-loading" style="color:var(--soldout)">No theatres found for this film.</div>';
+    document.getElementById('theatreList').innerHTML = '<div class="theatre-loading" style="color:var(--soldout)">No theatres found near Toronto for this film.</div>';
     return;
   }
 
   renderTheatreList(theatres);
   document.getElementById('theatreHint').textContent = 'Select up to 5 theatres to monitor.';
+  renderFormatChips(formats);
   document.getElementById('formatSection').style.display = 'block';
   document.getElementById('phoneSection').style.display = 'block';
   document.getElementById('btnSaveWatch').style.display = 'block';
+}
+
+function renderFormatChips(formats) {
+  // Normalise to display labels — collapse variants under common names
+  const PRIORITY = ['IMAX', 'VIP', 'ULTRAScreen', 'D-BOX', 'Standard', 'ScreenX', '4DX'];
+  const seen = new Set();
+  const chips = [];
+  // Priority order first
+  for (const p of PRIORITY) {
+    const match = formats.find(f => f.toUpperCase().includes(p.toUpperCase()));
+    if (match && !seen.has(p)) { chips.push({ label: p, match }); seen.add(p); }
+  }
+  // Any remaining formats
+  for (const f of formats) {
+    const key = f.split(',')[0].trim();
+    if (!seen.has(key)) { chips.push({ label: key, match: f }); seen.add(key); }
+  }
+  // Always include "Any format" as first option
+  const row = document.getElementById('formatRow');
+  row.innerHTML = [{ label: 'Any format', match: '' }, ...chips].map((c, i) =>
+    `<button class="format-btn${i === 0 ? ' selected' : ''}" data-match="${c.match}"
+      onclick="selectFormat(this, '${c.match}')">${c.label}</button>`
+  ).join('');
+  selectedFormat = ''; // default: any format
 }
 
 function renderTheatreList(theatres) {

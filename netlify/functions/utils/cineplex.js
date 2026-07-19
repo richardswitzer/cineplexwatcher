@@ -76,16 +76,38 @@ function extractSessions(data, filmId, theatreId) {
   return sessions;
 }
 
-// Returns [{theatreId, name}] for all theatres showing the film
+// Returns [{theatreId, name, city, province}] for all theatres showing the film
 function extractTheatres(data) {
   const arr = Array.isArray(data) ? data : Object.values(data);
   const theatres = [];
   for (const t of arr) {
     if (t.theatreId && t.theatreName) {
-      theatres.push({ theatreId: String(t.theatreId), name: t.theatreName });
+      theatres.push({
+        theatreId: String(t.theatreId),
+        name:      t.theatreName,
+        city:      t.city      || '',
+        province:  t.province  || t.provinceCode || '',
+      });
     }
   }
   return theatres.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-module.exports = { fetchParsed, extractSessions, extractTheatres };
+// Returns sorted unique format strings available for a film across all theatres
+function extractFormats(data) {
+  const arr = Array.isArray(data) ? data : Object.values(data);
+  const formats = new Set();
+  for (const t of arr) {
+    for (const d of t.dates || []) {
+      for (const m of d.movies || []) {
+        for (const exp of m.experiences || []) {
+          const name = (exp.experienceTypes || []).join(', ') || m.presentationType || '';
+          if (name) formats.add(name);
+        }
+      }
+    }
+  }
+  return [...formats].sort();
+}
+
+module.exports = { fetchParsed, extractSessions, extractTheatres, extractFormats };
