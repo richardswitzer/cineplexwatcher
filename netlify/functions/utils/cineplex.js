@@ -81,8 +81,8 @@ function extractTheatres(data) {
   const arr = Array.isArray(data) ? data : Object.values(data);
   const theatres = [];
   for (const t of arr) {
-    const id   = t.theatreId   || t.TheatreId   || t.theaterId   || t.theater_id;
-    const name = t.theatreName || t.TheatreName  || t.theaterName || t.name || t.theatre_name;
+    const id   = t.theatreId;
+    const name = t.theatre || t.theatreName || t.name;
     if (id && name) {
       theatres.push({
         theatreId: String(id),
