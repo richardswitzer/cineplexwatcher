@@ -1,4 +1,5 @@
-const https = require('https');
+const https  = require('https');
+const zlib   = require('zlib');
 
 const API_HOST = 'apis.cineplex.com';
 const API_PATH = '/prod/cpx/theatrical/api/v1/showtimes';
@@ -9,15 +10,22 @@ function get(url) {
     const req = https.get(url, {
       headers: {
         Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
         'Ocp-Apim-Subscription-Key': SUB_KEY,
         Origin: 'https://www.cineplex.com',
         Referer: 'https://www.cineplex.com/',
         'User-Agent': 'cineplex-showtime-watcher/1.0',
       },
     }, res => {
-      let body = '';
-      res.on('data', chunk => { body += chunk; });
-      res.on('end', () => resolve({ status: res.statusCode, body }));
+      const encoding = res.headers['content-encoding'];
+      let stream = res;
+      if (encoding === 'gzip')    stream = res.pipe(zlib.createGunzip());
+      if (encoding === 'deflate') stream = res.pipe(zlib.createInflate());
+
+      const chunks = [];
+      stream.on('data', chunk => chunks.push(chunk));
+      stream.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf-8') }));
+      stream.on('error', reject);
     });
     req.on('error', reject);
     req.end();
