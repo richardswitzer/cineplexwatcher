@@ -6,14 +6,37 @@ const { fetchParsed, extractTheatres, extractFormats } = require('./utils/cinepl
 
 const FALLBACK_THEATRE_ID = '7402'; // Scotiabank Toronto — confirmed to return full dataset
 
-const GTA_ORDER = ['Toronto','Mississauga','Brampton','Vaughan','Richmond Hill',
-  'Markham','Scarborough','North York','Etobicoke','Pickering','Ajax','Oakville',
-  'Burlington','Hamilton','Oshawa','Whitby','Newmarket','Barrie'];
-
-function cityOrder(city) {
-  const i = GTA_ORDER.findIndex(c => city.includes(c));
-  return i === -1 ? 99 : i;
-}
+// GTA theatre whitelist — sorted by proximity to downtown Toronto
+const GTA_THEATRES = [
+  { theatreId: '7402', name: 'Scotiabank Theatre Toronto' },
+  { theatreId: '7130', name: 'Cineplex Cinemas Yonge-Dundas and VIP' },
+  { theatreId: '7400', name: 'Cineplex Cinemas Yonge-Eglinton and VIP' },
+  { theatreId: '7406', name: 'Cineplex Cinemas Yorkdale' },
+  { theatreId: '7199', name: 'Cineplex Cinemas Varsity and VIP' },
+  { theatreId: '7139', name: 'Cineplex VIP Cinemas Don Mills' },
+  { theatreId: '7298', name: 'Cineplex Cinemas Empress Walk' },
+  { theatreId: '7253', name: 'Cineplex Odeon Eglinton Town Centre' },
+  { theatreId: '7115', name: 'Cineplex Cinemas Fairview Mall' },
+  { theatreId: '7404', name: 'Cineplex Cinemas Scarborough' },
+  { theatreId: '7240', name: 'Cineplex Odeon Morningside' },
+  { theatreId: '7260', name: 'Cineplex Cinemas Queensway and VIP' },
+  { theatreId: '7420', name: 'Cineplex Cinemas Mississauga Square One' },
+  { theatreId: '7122', name: 'Cineplex Cinemas Courtney Park' },
+  { theatreId: '7123', name: 'Cineplex Cinemas Winston Churchill & VIP' },
+  { theatreId: '7313', name: 'Cineplex Junxion Erin Mills' },
+  { theatreId: '7411', name: 'SilverCity Brampton Cinemas' },
+  { theatreId: '7408', name: 'Cineplex Cinemas Vaughan' },
+  { theatreId: '7405', name: 'SilverCity Richmond Hill Cinemas' },
+  { theatreId: '7213', name: 'Cineplex Cinemas Markham and VIP' },
+  { theatreId: '7312', name: 'Cineplex Cinemas Pickering and VIP' },
+  { theatreId: '7248', name: 'Cineplex Odeon Ajax Cinemas' },
+  { theatreId: '7273', name: 'Cineplex Cinemas Oakville and VIP' },
+  { theatreId: '7413', name: 'SilverCity Burlington Cinemas' },
+  { theatreId: '7407', name: 'SilverCity Newmarket Cinemas' },
+  { theatreId: '7284', name: 'Cineplex Odeon Aurora Cinemas' },
+  { theatreId: '7290', name: 'Cineplex Cinemas Hamilton Mountain' },
+  { theatreId: '7415', name: 'Cineplex Cinemas Ancaster' },
+];
 
 exports.handler = async function (event) {
   const { filmId } = event.queryStringParameters || {};
@@ -26,20 +49,11 @@ exports.handler = async function (event) {
     return { statusCode: 502, body: JSON.stringify({ error: err.message }) };
   }
 
-  const all      = extractTheatres(data);
-  const formats  = extractFormats(data);
-
-  // Filter to Ontario; fall back to all if none found (data may lack province)
-  let theatres = all.filter(t => t.province === 'ON' || t.province === 'Ontario');
-  if (theatres.length === 0) theatres = all;
-
-  // Sort: GTA cities first, then alphabetical within each city
-  theatres.sort((a, b) => {
-    const oa = cityOrder(a.city || a.name);
-    const ob = cityOrder(b.city || b.name);
-    if (oa !== ob) return oa - ob;
-    return a.name.localeCompare(b.name);
-  });
+  // Only show GTA theatres that are actually showing this film
+  const allTheatres  = extractTheatres(data);
+  const showingIds   = new Set(allTheatres.map(t => t.theatreId));
+  const theatres     = GTA_THEATRES.filter(t => showingIds.has(t.theatreId));
+  const formats      = extractFormats(data);
 
   return {
     statusCode: 200,
