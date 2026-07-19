@@ -81,12 +81,14 @@ function extractTheatres(data) {
   const arr = Array.isArray(data) ? data : Object.values(data);
   const theatres = [];
   for (const t of arr) {
-    if (t.theatreId && t.theatreName) {
+    const id   = t.theatreId   || t.TheatreId   || t.theaterId   || t.theater_id;
+    const name = t.theatreName || t.TheatreName  || t.theaterName || t.name || t.theatre_name;
+    if (id && name) {
       theatres.push({
-        theatreId: String(t.theatreId),
-        name:      t.theatreName,
-        city:      t.city      || '',
-        province:  t.province  || t.provinceCode || '',
+        theatreId: String(id),
+        name,
+        city:     t.city      || t.City     || '',
+        province: t.province  || t.Province || t.provinceCode || t.ProvinceCode || '',
       });
     }
   }
