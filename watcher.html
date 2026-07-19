@@ -17,6 +17,7 @@ button { font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion:reduce) { :root { --pulse-dur:0s; --flash-dur:0s; --panel-dur:0s; } }
 @keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes flashNew { 0%{background:rgba(212,160,32,.18)} 100%{background:transparent} }
+@keyframes spin { to { transform:rotate(360deg); } }
 
 /* ── Tokens ─────────────────────────────────── */
 :root {
@@ -42,6 +43,116 @@ button { font-family: inherit; cursor: pointer; }
 }
 .container { max-width:900px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
 @media(max-width:519px){.container{padding:1.5rem 1rem 3rem;}}
+
+/* ── Auth overlay ───────────────────────────── */
+.auth-overlay {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:2rem 1.5rem;
+}
+.auth-card {
+  background:var(--surface); max-width:480px; width:100%;
+  padding:2.5rem; border-left:3px solid var(--amber);
+}
+.auth-logo {
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  font-size:1.5rem; color:var(--amber); margin-bottom:.3rem;
+}
+.auth-tagline { font-size:.85rem; color:var(--text2); margin-bottom:2rem; line-height:1.5; }
+.auth-label {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--amber); display:block; margin-bottom:.4rem;
+}
+.auth-input {
+  width:100%; background:transparent;
+  border:none; border-bottom:1px solid var(--rule);
+  color:var(--text); font-size:1rem; padding:.5rem 0;
+  outline:none; transition:border-color .15s;
+}
+.auth-input:focus { border-bottom-color:var(--amber); }
+.auth-input::placeholder { color:var(--text3); }
+.auth-btn {
+  margin-top:1.25rem; width:100%;
+  background:var(--amber); color:var(--onAmber);
+  border:none; font-size:.85rem; font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase;
+  padding:.85rem 1rem;
+}
+.auth-btn:hover:not(:disabled) { opacity:.9; }
+.auth-btn:disabled { opacity:.5; cursor:default; }
+.auth-msg { margin-top:1rem; font-size:.85rem; color:var(--text2); line-height:1.5; }
+.auth-msg strong { color:var(--text); }
+.auth-err { color:var(--soldout); }
+
+/* ── Setup form ─────────────────────────────── */
+.setup-section { margin-bottom:1.75rem; }
+.setup-section-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--amber); margin-bottom:.75rem;
+}
+.film-url-row { display:flex; gap:.5rem; align-items:flex-end; }
+.film-url-input {
+  flex:1; background:transparent;
+  border:none; border-bottom:1px solid var(--rule);
+  color:var(--text); font-size:.9rem; padding:.5rem 0;
+  outline:none; transition:border-color .15s;
+}
+.film-url-input:focus { border-bottom-color:var(--amber); }
+.film-url-input::placeholder { color:var(--text3); font-size:.85rem; }
+.btn-small {
+  background:var(--surface2); color:var(--text2);
+  border:1px solid var(--rule); font-size:.72rem; font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase; padding:.45rem .8rem;
+  white-space:nowrap;
+}
+.btn-small:hover { color:var(--text); border-color:var(--text2); }
+.btn-small:disabled { opacity:.5; cursor:default; }
+.film-found {
+  margin-top:.75rem; padding:.65rem .85rem;
+  background:rgba(76,175,125,.1); border-left:3px solid var(--available);
+  font-size:.85rem;
+}
+.film-found strong { color:var(--available); }
+.spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid var(--rule); border-top-color:var(--amber);
+  border-radius:50%; animation:spin .7s linear infinite;
+  vertical-align:middle; margin-left:.4rem;
+}
+
+.theatre-list { display:flex; flex-direction:column; gap:.4rem; }
+.theatre-item {
+  display:flex; align-items:center; gap:.65rem;
+  padding:.6rem .75rem; background:var(--surface2); cursor:pointer;
+}
+.theatre-item:hover { outline:1px solid var(--rule); }
+.theatre-item.selected { outline:1px solid var(--amber); }
+.theatre-item input[type=checkbox] { accent-color:var(--amber); width:15px; height:15px; cursor:pointer; }
+.theatre-item-name { font-size:.88rem; }
+.theatre-hint { font-size:.72rem; color:var(--text3); margin-top:.35rem; }
+.theatre-loading { font-size:.8rem; color:var(--text2); padding:.5rem 0; }
+
+.format-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+.format-btn {
+  background:transparent; border:1px solid var(--rule);
+  color:var(--text2); font-size:.78rem; font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase; padding:.45rem .9rem;
+}
+.format-btn.selected { background:var(--amber); color:var(--onAmber); border-color:var(--amber); }
+.format-btn:hover:not(.selected) { color:var(--text); border-color:var(--text2); }
+
+.phone-row { display:flex; flex-direction:column; gap:.4rem; }
+.phone-hint { font-size:.72rem; color:var(--text3); }
+
+/* ── User bar ───────────────────────────────── */
+.user-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.5rem 0 1rem; flex-wrap:wrap; gap:.5rem;
+}
+.user-email { font-size:.72rem; color:var(--text3); font-family:'JetBrains Mono',monospace; }
+.user-bar-actions { display:flex; gap:.4rem; }
 
 /* ── Header ─────────────────────────────────── */
 .header-row {
@@ -80,79 +191,19 @@ button { font-family: inherit; cursor: pointer; }
 }
 .btn-refresh { background:var(--amber); color:var(--onAmber); }
 .btn-refresh:disabled { background:var(--surface); color:var(--text2); cursor:default; opacity:.6; }
-.btn-filter {
+.btn-secondary {
   background:transparent; color:var(--text2);
-  border:1px solid var(--rule); display:flex; align-items:center; gap:.4rem;
+  border:1px solid var(--rule);
 }
-.btn-filter.active { color:var(--amber); border-color:var(--amber); }
-.btn-filter:hover:not(.active) { color:var(--text); border-color:var(--text2); }
+.btn-secondary:hover { color:var(--text); border-color:var(--text2); }
 .btn-theme { background:transparent; color:var(--text2); border:1px solid var(--rule); }
 .btn-theme:hover { color:var(--text); border-color:var(--text2); }
+.btn-reset { background:transparent; color:var(--soldout); border:1px solid var(--soldout); }
+.btn-reset:hover { background:rgba(192,80,80,.12); }
 
 /* ── Divider ────────────────────────────────── */
 .divider { height:1px; background:var(--rule); margin:1.75rem 0; }
 @media(max-width:519px){.divider{margin:1.25rem 0;}}
-
-/* ── Filter panel ───────────────────────────── */
-.filter-panel {
-  overflow:hidden;
-  max-height:0;
-  transition:max-height var(--panel-dur) ease-out, margin var(--panel-dur) ease-out;
-  margin-bottom:0;
-}
-.filter-panel.open {
-  max-height:320px;
-  margin-bottom:1.75rem;
-  transition:max-height var(--panel-dur) ease-in, margin var(--panel-dur) ease-in;
-}
-@media(max-width:519px){.filter-panel.open{max-height:480px;}}
-
-.filter-inner {
-  background:var(--surface);
-  border-left:3px solid var(--amber);
-  padding:1.25rem 1.5rem 1.5rem;
-}
-.filter-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:1.25rem;
-  margin-bottom:1.25rem;
-}
-@media(max-width:600px){.filter-grid{grid-template-columns:1fr;gap:.85rem;}}
-
-.filter-group { display:flex; flex-direction:column; gap:.35rem; }
-.filter-label {
-  font-family:'JetBrains Mono','Courier New',monospace;
-  font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--amber);
-}
-.filter-select {
-  appearance:none; -webkit-appearance:none;
-  background:transparent;
-  border:none; border-bottom:1px solid var(--rule);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:.9rem;
-  padding:.35rem 1.5rem .35rem 0;
-  cursor:pointer; width:100%;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239E9A93'/%3E%3C/svg%3E");
-  background-repeat:no-repeat; background-position:right 0 center;
-  transition:border-color .15s;
-}
-.filter-select:focus { outline:none; border-bottom-color:var(--amber); }
-.filter-select option { background:var(--ground); color:var(--text); }
-
-.filter-actions { display:flex; align-items:center; gap:.75rem; }
-.btn-apply {
-  background:var(--amber); color:var(--onAmber);
-  font-size:.75rem; font-weight:700; letter-spacing:.06em;
-  text-transform:uppercase; padding:.55rem 1.1rem; border:none;
-}
-.btn-apply:hover { opacity:.9; }
-.filter-hint {
-  font-family:'JetBrains Mono',monospace;
-  font-size:.68rem; color:var(--text3); letter-spacing:.04em;
-}
 
 /* ── Live badge ─────────────────────────────── */
 .data-badge {
@@ -231,348 +282,438 @@ button { font-family: inherit; cursor: pointer; }
 </head>
 <body>
 <div id="app" data-theme="dark">
-  <div class="container">
 
-    <header class="header-row">
-      <div class="title-block">
-        <div class="display-title" id="movieTitle"></div>
-        <div class="subhead" id="movieSub"></div>
-      </div>
-      <div class="status-block">
-        <div class="status-pill">
-          <span class="dot" id="statusDot"></span>
-          <span id="statusText">Checking…</span>
-          <span class="data-badge mock" id="dataBadge">Demo</span>
-        </div>
-        <div class="last-checked" id="lastChecked">LAST CHECKED —</div>
-        <div class="btn-row">
-          <button class="btn btn-filter" id="btnFilter" onclick="toggleFilter()">
-            <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <rect y="0" width="13" height="1.5" fill="currentColor"/>
-              <rect x="2" y="4" width="9" height="1.5" fill="currentColor"/>
-              <rect x="4" y="8" width="5" height="1.5" fill="currentColor"/>
-            </svg>
-            Filter
-          </button>
-          <button class="btn btn-refresh" id="btnRefresh" onclick="onRefresh()">Refresh</button>
-          <button class="btn btn-theme" id="btnTheme" onclick="toggleTheme()">Light</button>
-        </div>
-      </div>
-    </header>
-
-    <div class="divider"></div>
-
-    <!-- Filter panel -->
-    <div class="filter-panel" id="filterPanel">
-      <div class="filter-inner">
-        <div class="filter-grid">
-          <div class="filter-group">
-            <span class="filter-label">Film</span>
-            <select class="filter-select" id="filmSelect"></select>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Theatre</span>
-            <select class="filter-select" id="theatreSelect" onchange="onTheatreChange()"></select>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Format</span>
-            <select class="filter-select" id="formatSelect"></select>
-          </div>
-        </div>
-        <div class="filter-actions">
-          <button class="btn btn-apply" onclick="applyFilter()">Watch this</button>
-          <span class="filter-hint" id="filterHint"></span>
-        </div>
-      </div>
-    </div>
-
-    <div id="errorBanner" class="banner banner-error" style="display:none"></div>
-    <div id="newBanner" class="banner banner-new" style="display:none">
-      <span id="newBannerText"></span>
-      <button class="banner-dismiss" onclick="dismissNewBanner()" aria-label="Dismiss">&times;</button>
-    </div>
-
-    <div class="summary-row" id="summaryRow"></div>
-    <div id="sessionsView"></div>
-
-    <div class="footer-note">
-      Auto-refreshes every 5 min while tab is visible · 60s minimum between manual refreshes ·
-      Live data requires a server proxy — see <code>cineplex-api-smoke-test/</code> for the confirmed API endpoint.
+  <!-- ── AUTH: not logged in ── -->
+  <div id="viewAuth" class="auth-overlay" style="display:none">
+    <div class="auth-card">
+      <div class="auth-logo">Cineplex Watcher</div>
+      <div class="auth-tagline">Get an SMS the moment new showtimes are posted for your film.</div>
+      <label class="auth-label" for="emailInput">Your email</label>
+      <input class="auth-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
+      <button class="auth-btn" id="btnMagicLink" onclick="sendMagicLink()">Send sign-in link</button>
+      <div class="auth-msg" id="authMsg"></div>
     </div>
   </div>
+
+  <!-- ── AUTH: magic link sent ── -->
+  <div id="viewMagicSent" class="auth-overlay" style="display:none">
+    <div class="auth-card">
+      <div class="auth-logo">Check your inbox</div>
+      <div class="auth-tagline" id="magicSentMsg"></div>
+      <button class="auth-btn" style="margin-top:2rem" onclick="showView('viewAuth')">Use a different email</button>
+    </div>
+  </div>
+
+  <!-- ── SETUP: logged in, no watch saved ── -->
+  <div id="viewSetup" class="auth-overlay" style="display:none;align-items:flex-start">
+    <div style="max-width:560px;width:100%;padding:2.5rem 0">
+      <div class="auth-logo" style="margin-bottom:.25rem">Set up your alert</div>
+      <div class="auth-tagline">Pick a film, choose up to 5 theatres, and we'll text you the moment new showtimes appear.</div>
+
+      <!-- Film -->
+      <div class="setup-section">
+        <div class="setup-section-title">Film</div>
+        <div class="film-url-row">
+          <input class="film-url-input" type="text" id="filmUrlInput"
+            placeholder="Paste Cineplex film URL — e.g. cineplex.com/film/the-odyssey/37617"
+            oninput="onFilmInputChange()">
+          <button class="btn-small" id="btnLoadTheatres" onclick="loadTheatres()" disabled>Load theatres</button>
+        </div>
+        <div id="filmFoundMsg" style="display:none" class="film-found"></div>
+      </div>
+
+      <!-- Theatres -->
+      <div class="setup-section" id="theatreSection" style="display:none">
+        <div class="setup-section-title">Theatres <span style="color:var(--text3);font-weight:normal">(choose up to 5)</span></div>
+        <div id="theatreList" class="theatre-list"></div>
+        <div class="theatre-hint" id="theatreHint"></div>
+      </div>
+
+      <!-- Format -->
+      <div class="setup-section" id="formatSection" style="display:none">
+        <div class="setup-section-title">Format</div>
+        <div class="format-row" id="formatRow">
+          <button class="format-btn selected" onclick="selectFormat(this,'IMAX')">IMAX</button>
+          <button class="format-btn" onclick="selectFormat(this,'ULTRAScreen')">ULTRAScreen</button>
+          <button class="format-btn" onclick="selectFormat(this,'D-BOX')">D-BOX</button>
+          <button class="format-btn" onclick="selectFormat(this,'Standard')">Standard</button>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="setup-section" id="phoneSection" style="display:none">
+        <div class="setup-section-title">SMS alerts</div>
+        <div class="phone-row">
+          <input class="auth-input" type="tel" id="phoneInput" placeholder="+1 416 555 0100" autocomplete="tel">
+          <div class="phone-hint">E.164 format (+1XXXXXXXXXX). Leave blank to skip SMS.</div>
+        </div>
+      </div>
+
+      <div id="setupError" class="auth-msg auth-err" style="display:none;margin-bottom:.75rem"></div>
+      <button class="auth-btn" id="btnSaveWatch" style="display:none" onclick="saveWatch()">Start watching</button>
+    </div>
+  </div>
+
+  <!-- ── WATCHER: logged in, watch saved ── -->
+  <div id="viewWatcher" style="display:none">
+    <div class="container">
+
+      <div class="user-bar">
+        <span class="user-email" id="userEmail"></span>
+        <div class="user-bar-actions">
+          <button class="btn btn-theme" id="btnTheme" onclick="toggleTheme()">Light</button>
+          <button class="btn btn-reset" onclick="confirmReset()">Reset watch</button>
+        </div>
+      </div>
+
+      <header class="header-row">
+        <div class="title-block">
+          <div class="display-title" id="movieTitle"></div>
+          <div class="subhead" id="movieSub"></div>
+        </div>
+        <div class="status-block">
+          <div class="status-pill">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Checking…</span>
+            <span class="data-badge mock" id="dataBadge">Live</span>
+          </div>
+          <div class="last-checked" id="lastChecked">LAST CHECKED —</div>
+          <div class="btn-row">
+            <button class="btn btn-refresh" id="btnRefresh" onclick="onRefresh()">Refresh</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="divider"></div>
+
+      <div id="errorBanner" class="banner banner-error" style="display:none"></div>
+      <div id="newBanner" class="banner banner-new" style="display:none">
+        <span id="newBannerText"></span>
+        <button class="banner-dismiss" onclick="dismissNewBanner()" aria-label="Dismiss">&times;</button>
+      </div>
+
+      <div class="summary-row" id="summaryRow"></div>
+      <div id="sessionsView"></div>
+
+      <div class="footer-note">
+        Server polls every 5 min and sends SMS for new showtimes · Browser refreshes every 5 min while tab is visible
+      </div>
+    </div>
+  </div>
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-/* ─────────────────────────────────────────────────────
-   API CONFIG
-   When a server proxy is running at /api/showtimes,
-   set USE_LIVE_API = true. The proxy must forward:
-     GET /api/showtimes?filmId=X&theatreId=Y&language=en
-   to the Cineplex API with the subscription key header.
-───────────────────────────────────────────────────── */
-const USE_LIVE_API = true;
-const API_PROXY    = '/.netlify/functions/showtimes';
+/* ── Config ─────────────────────────────────────────── */
+const SUPABASE_URL  = 'https://oqbedpwcykzxarkymmzk.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_bAcMX_QyJUe_G1NXAsVXmw_ZssU11LV';
+const API_PROXY     = '/.netlify/functions/showtimes';
+const WATCH_API     = '/.netlify/functions/watch';
+const THEATRES_API  = '/.netlify/functions/theatres';
 
-/* ── Catalogue (mock data / fallback) ───────────────── */
-const CATALOGUE = [
-  {
-    film:'The Odyssey', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
-    filmId:'37617', theatreId:'7402',
-    sessions:[
-      {id:'VS100201',date:'2026-07-18',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:16, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-76*3600000},
-      {id:'VS100202',date:'2026-07-18',time:'11:00 PM',fmt:'IMAX, Laser Projection',seats:46, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-30*3600000},
-      {id:'VS100203',date:'2026-07-19',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:54, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-50*3600000},
-      {id:'VS100204',date:'2026-07-19',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:50, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-96*3600000},
-      {id:'VS100205',date:'2026-07-19',time:'11:00 PM',fmt:'IMAX, Laser Projection',seats:95, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
-      {id:'VS100206',date:'2026-07-20',time:'02:30 PM',fmt:'IMAX, Laser Projection',seats:12, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-6*3600000},
-      {id:'VS100207',date:'2026-07-20',time:'06:30 PM',fmt:'IMAX, Laser Projection',seats:0,  soldOut:true, bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-130*3600000},
-      {id:'VS100208',date:'2026-07-21',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:105,soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-20*3600000},
-      {id:'VS100209',date:'2026-07-21',time:'07:00 PM',fmt:'IMAX, Laser Projection',seats:27, soldOut:false,bookable:true, url:'https://www.cineplex.com/',posted:Date.now()-40*3600000},
-    ]
-  },
-  {
-    film:'The Odyssey', theatre:'Cineplex Cinemas Yonge-Dundas', format:'IMAX',
-    filmId:'37617', theatreId:'1001',
-    sessions:[
-      {id:'VS200101',date:'2026-07-18',time:'06:30 PM',fmt:'IMAX, Laser Projection',seats:33,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-48*3600000},
-      {id:'VS200102',date:'2026-07-19',time:'09:00 AM',fmt:'IMAX, Laser Projection',seats:72,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-24*3600000},
-      {id:'VS200103',date:'2026-07-19',time:'04:45 PM',fmt:'IMAX, Laser Projection',seats:8, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-60*3600000},
-      {id:'VS200104',date:'2026-07-20',time:'07:15 PM',fmt:'IMAX, Laser Projection',seats:0, soldOut:true, bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-110*3600000},
-      {id:'VS200105',date:'2026-07-21',time:'12:30 PM',fmt:'IMAX, Laser Projection',seats:88,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-18*3600000},
-    ]
-  },
-  {
-    film:'The Odyssey', theatre:'Scotiabank Theatre Toronto', format:'Standard',
-    filmId:'37617', theatreId:'7402',
-    sessions:[
-      {id:'VS300101',date:'2026-07-18',time:'12:00 PM',fmt:'Standard',seats:142,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-72*3600000},
-      {id:'VS300102',date:'2026-07-18',time:'03:30 PM',fmt:'Standard',seats:211,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-72*3600000},
-      {id:'VS300103',date:'2026-07-19',time:'06:00 PM',fmt:'Standard',seats:67, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-48*3600000},
-    ]
-  },
-  {
-    film:'Superman: Legacy', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
-    filmId:'38100', theatreId:'7402',
-    sessions:[
-      {id:'VS400101',date:'2026-07-18',time:'05:00 PM',fmt:'IMAX, Laser Projection',seats:3, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
-      {id:'VS400102',date:'2026-07-18',time:'09:30 PM',fmt:'IMAX, Laser Projection',seats:0, soldOut:true, bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
-      {id:'VS400103',date:'2026-07-19',time:'02:00 PM',fmt:'IMAX, Laser Projection',seats:18,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-100*3600000},
-    ]
-  },
-  {
-    film:'Superman: Legacy', theatre:'SilverCity Mississauga Cinemas', format:'IMAX',
-    filmId:'38100', theatreId:'2201',
-    sessions:[
-      {id:'VS500101',date:'2026-07-18',time:'04:15 PM',fmt:'IMAX, Laser Projection',seats:61,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
-      {id:'VS500102',date:'2026-07-19',time:'07:30 PM',fmt:'IMAX, Laser Projection',seats:44,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
-      {id:'VS500103',date:'2026-07-20',time:'10:00 AM',fmt:'IMAX, Laser Projection',seats:97,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-36*3600000},
-    ]
-  },
-  {
-    film:'Jurassic World Rebirth', theatre:'Scotiabank Theatre Toronto', format:'IMAX',
-    filmId:'38200', theatreId:'7402',
-    sessions:[
-      {id:'VS600101',date:'2026-07-19',time:'10:00 AM',fmt:'IMAX, Laser Projection',seats:128,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
-      {id:'VS600102',date:'2026-07-19',time:'01:30 PM',fmt:'IMAX, Laser Projection',seats:77, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
-      {id:'VS600103',date:'2026-07-20',time:'04:00 PM',fmt:'IMAX, Laser Projection',seats:19, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-12*3600000},
-    ]
-  },
-  {
-    film:'Jurassic World Rebirth', theatre:'SilverCity Mississauga Cinemas', format:'IMAX',
-    filmId:'38200', theatreId:'2201',
-    sessions:[
-      {id:'VS700101',date:'2026-07-19',time:'11:00 AM',fmt:'IMAX, Laser Projection',seats:90,soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-8*3600000},
-      {id:'VS700102',date:'2026-07-20',time:'02:15 PM',fmt:'IMAX, Laser Projection',seats:5, soldOut:false,bookable:true,url:'https://www.cineplex.com/',posted:Date.now()-8*3600000},
-    ]
-  },
-];
+/* ── Supabase client ─────────────────────────────────── */
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { autoRefreshToken:true, persistSession:true, detectSessionInUrl:true }
+});
 
-/* ── Derived helpers ────────────────────────────────── */
-const FILMS         = [...new Set(CATALOGUE.map(c => c.film))];
-const theatresFor   = f  => [...new Set(CATALOGUE.filter(c => c.film===f).map(c => c.theatre))];
-const formatsFor    = (f,t) => [...new Set(CATALOGUE.filter(c => c.film===f && c.theatre===t).map(c => c.format))];
-const catalogueEntry= (f,t,fmt) => CATALOGUE.find(c => c.film===f && c.theatre===t && c.format===fmt);
+/* ── App state ──────────────────────────────────────── */
+let currentSession = null;
+let currentWatch   = null; // saved watch row from DB
+let selectedFormat = 'IMAX';
+let selectedTheatreIds   = [];
+let selectedTheatreNames = [];
+let parsedFilmId   = '';
+let parsedFilmName = '';
 
-/* ── State ──────────────────────────────────────────── */
-const watch = {
-  film:    FILMS[0],
-  theatre: theatresFor(FILMS[0])[0],
-  format:  formatsFor(FILMS[0], theatresFor(FILMS[0])[0])[0],
-};
-
-const state = {
-  theme:'dark', filterOpen:false,
-  isLive:false,
+const watcherState = {
+  theme:'dark',
   loading:false, lastChecked:Date.now(),
   cooldownUntil:0, nowTick:Date.now(),
   newIds:[], newBannerDismissed:false, error:null,
   sessions:[],
+  isLive:false,
 };
 
-function currentEntry() { return catalogueEntry(watch.film, watch.theatre, watch.format); }
-
-/* ── Filter panel ───────────────────────────────────── */
-function toggleFilter() {
-  state.filterOpen = !state.filterOpen;
-  document.getElementById('filterPanel').classList.toggle('open', state.filterOpen);
-  document.getElementById('btnFilter').classList.toggle('active', state.filterOpen);
-  if (state.filterOpen) syncFilterSelects();
+/* ── View management ─────────────────────────────────── */
+function showView(id) {
+  ['viewAuth','viewMagicSent','viewSetup','viewWatcher'].forEach(v => {
+    document.getElementById(v).style.display = v === id ? (v === 'viewWatcher' ? 'block' : 'flex') : 'none';
+  });
 }
 
-function syncFilterSelects() {
-  const fSel = document.getElementById('filmSelect');
-  fSel.innerHTML = FILMS.map(f => `<option${f===watch.film?' selected':''}>${f}</option>`).join('');
-  syncTheatreSelect();
-}
-function syncTheatreSelect() {
-  const f = document.getElementById('filmSelect').value;
-  const opts = theatresFor(f);
-  const tSel = document.getElementById('theatreSelect');
-  tSel.innerHTML = opts.map(t => `<option${t===watch.theatre&&f===watch.film?' selected':''}>${t}</option>`).join('');
-  syncFormatSelect();
-}
-function syncFormatSelect() {
-  const f  = document.getElementById('filmSelect').value;
-  const t  = document.getElementById('theatreSelect').value;
-  const opts = formatsFor(f, t);
-  const fmtSel = document.getElementById('formatSelect');
-  fmtSel.innerHTML = opts.map(fmt => `<option${fmt===watch.format&&f===watch.film&&t===watch.theatre?' selected':''}>${fmt}</option>`).join('');
-  updateFilterHint(f, t, fmtSel.value);
-}
-function onTheatreChange() { syncFormatSelect(); }
-
-function updateFilterHint(f, t, fmt) {
-  const entry = catalogueEntry(f, t, fmt);
-  const count = entry ? entry.sessions.filter(s=>s.bookable).length : 0;
-  document.getElementById('filterHint').textContent =
-    entry ? `${count} session${count!==1?'s':''} in demo data` : 'No demo data for this combination';
+/* ── Auth ───────────────────────────────────────────── */
+async function sendMagicLink() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) return;
+  const btn = document.getElementById('btnMagicLink');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href.split('#')[0] }
+  });
+  if (error) {
+    document.getElementById('authMsg').innerHTML = `<span class="auth-err">${error.message}</span>`;
+    btn.disabled = false; btn.textContent = 'Send sign-in link';
+    return;
+  }
+  document.getElementById('magicSentMsg').innerHTML =
+    `We sent a sign-in link to <strong>${email}</strong>. Click it to continue — no password needed.`;
+  showView('viewMagicSent');
 }
 
-function applyFilter() {
-  watch.film    = document.getElementById('filmSelect').value;
-  watch.theatre = document.getElementById('theatreSelect').value;
-  watch.format  = document.getElementById('formatSelect').value;
-  state.filterOpen = false;
-  document.getElementById('filterPanel').classList.remove('open');
-  document.getElementById('btnFilter').classList.remove('active');
-  state.newIds = []; state.newBannerDismissed = false; state.error = null;
-  loadSessions();
+async function signOut() {
+  await sb.auth.signOut();
+  currentSession = null; currentWatch = null;
+  showView('viewAuth');
 }
 
-/* ── Data loading ───────────────────────────────────── */
-async function loadSessions() {
-  if (USE_LIVE_API) {
-    await fetchLive();
-  } else {
-    loadMock();
+async function confirmReset() {
+  if (!confirm('Stop watching this film and clear your preferences?')) return;
+  const res = await fetch(WATCH_API, {
+    method:'DELETE',
+    headers:{ Authorization:`Bearer ${currentSession.access_token}` }
+  });
+  if (res.ok) {
+    currentWatch = null;
+    parsedFilmId = ''; parsedFilmName = '';
+    selectedTheatreIds = []; selectedTheatreNames = [];
+    resetSetupForm();
+    showView('viewSetup');
   }
 }
 
-function loadMock() {
-  const entry = currentEntry();
-  state.sessions = entry ? entry.sessions.filter(s=>s.bookable).map(s=>({...s})) : [];
-  state.isLive = false;
-  state.lastChecked = Date.now();
-  render();
+/* ── Load saved watch from DB ───────────────────────── */
+async function loadSavedWatch() {
+  const res = await fetch(WATCH_API, {
+    headers:{ Authorization:`Bearer ${currentSession.access_token}` }
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+/* ── Setup form ─────────────────────────────────────── */
+function onFilmInputChange() {
+  const val = document.getElementById('filmUrlInput').value.trim();
+  const parsed = parseFilmInput(val);
+  document.getElementById('btnLoadTheatres').disabled = !parsed;
+  if (!parsed) {
+    document.getElementById('filmFoundMsg').style.display = 'none';
+    document.getElementById('theatreSection').style.display = 'none';
+    document.getElementById('formatSection').style.display = 'none';
+    document.getElementById('phoneSection').style.display = 'none';
+    document.getElementById('btnSaveWatch').style.display = 'none';
+  }
+}
+
+function parseFilmInput(input) {
+  const urlMatch = input.match(/\/film\/([^/?#]+)\/(\d+)/i);
+  if (urlMatch) {
+    const name = urlMatch[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return { filmId: urlMatch[2], filmName: name };
+  }
+  if (/^\d{4,6}$/.test(input.trim())) return { filmId: input.trim(), filmName: '' };
+  return null;
+}
+
+async function loadTheatres() {
+  const val    = document.getElementById('filmUrlInput').value.trim();
+  const parsed = parseFilmInput(val);
+  if (!parsed) return;
+
+  parsedFilmId   = parsed.filmId;
+  parsedFilmName = parsed.filmName;
+
+  const btn = document.getElementById('btnLoadTheatres');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  document.getElementById('theatreList').innerHTML = '<div class="theatre-loading">Loading theatres… <span class="spinner"></span></div>';
+  document.getElementById('theatreSection').style.display = 'block';
+
+  let theatres = [];
+  try {
+    const res = await fetch(`${THEATRES_API}?filmId=${parsedFilmId}`);
+    if (res.ok) theatres = await res.json();
+  } catch(e) {}
+
+  if (theatres.length === 0) {
+    document.getElementById('theatreList').innerHTML = '<div class="theatre-loading" style="color:var(--soldout)">No theatres found for that film ID. Double-check the URL.</div>';
+    btn.disabled = false; btn.textContent = 'Load theatres';
+    return;
+  }
+
+  // Show film name if we parsed it
+  if (parsedFilmName) {
+    document.getElementById('filmFoundMsg').innerHTML = `<strong>${parsedFilmName}</strong> · Film ID ${parsedFilmId}`;
+    document.getElementById('filmFoundMsg').style.display = 'block';
+  }
+
+  renderTheatreList(theatres);
+  document.getElementById('formatSection').style.display = 'block';
+  document.getElementById('phoneSection').style.display = 'block';
+  document.getElementById('btnSaveWatch').style.display = 'block';
+  document.getElementById('theatreHint').textContent = 'Select up to 5 theatres to monitor.';
+  btn.disabled = false; btn.textContent = 'Reload';
+}
+
+function renderTheatreList(theatres) {
+  const list = document.getElementById('theatreList');
+  list.innerHTML = theatres.map(t => `
+    <label class="theatre-item" id="ti-${t.theatreId}">
+      <input type="checkbox" value="${t.theatreId}" data-name="${t.name.replace(/"/g,'&quot;')}"
+        onchange="onTheatreCheck(this)">
+      <span class="theatre-item-name">${t.name}</span>
+    </label>
+  `).join('');
+}
+
+function onTheatreCheck(cb) {
+  if (cb.checked && selectedTheatreIds.length >= 5) {
+    cb.checked = false; return;
+  }
+  if (cb.checked) {
+    selectedTheatreIds.push(cb.value);
+    selectedTheatreNames.push(cb.dataset.name);
+    cb.closest('.theatre-item').classList.add('selected');
+  } else {
+    const i = selectedTheatreIds.indexOf(cb.value);
+    if (i !== -1) { selectedTheatreIds.splice(i,1); selectedTheatreNames.splice(i,1); }
+    cb.closest('.theatre-item').classList.remove('selected');
+  }
+  document.getElementById('theatreHint').textContent =
+    selectedTheatreIds.length === 0 ? 'Select up to 5 theatres to monitor.'
+    : `${selectedTheatreIds.length}/5 selected`;
+}
+
+function selectFormat(btn, fmt) {
+  selectedFormat = fmt;
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function resetSetupForm() {
+  document.getElementById('filmUrlInput').value = '';
+  document.getElementById('filmFoundMsg').style.display = 'none';
+  document.getElementById('theatreSection').style.display = 'none';
+  document.getElementById('formatSection').style.display = 'none';
+  document.getElementById('phoneSection').style.display = 'none';
+  document.getElementById('btnSaveWatch').style.display = 'none';
+  document.getElementById('setupError').style.display = 'none';
+  document.getElementById('phoneInput').value = '';
+  document.getElementById('btnLoadTheatres').disabled = true;
+  selectedTheatreIds = []; selectedTheatreNames = [];
+  parsedFilmId = ''; parsedFilmName = '';
+}
+
+async function saveWatch() {
+  if (!parsedFilmId)              return showSetupError('Paste a Cineplex film URL first.');
+  if (!selectedTheatreIds.length) return showSetupError('Select at least one theatre.');
+
+  const phone = document.getElementById('phoneInput').value.trim() || null;
+  const btn   = document.getElementById('btnSaveWatch');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const res = await fetch(WATCH_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${currentSession.access_token}`,
+    },
+    body: JSON.stringify({
+      film_id:       parsedFilmId,
+      film_name:     parsedFilmName || `Film ${parsedFilmId}`,
+      theatre_ids:   selectedTheatreIds,
+      theatre_names: selectedTheatreNames,
+      format:        selectedFormat,
+      phone,
+    }),
+  });
+
+  btn.disabled = false; btn.textContent = 'Start watching';
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    return showSetupError(err.error || 'Save failed. Try again.');
+  }
+
+  currentWatch = await res.json();
+  startWatcher();
+}
+
+function showSetupError(msg) {
+  const el = document.getElementById('setupError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+/* ── Watcher ─────────────────────────────────────────── */
+function startWatcher() {
+  const w = currentWatch;
+  document.getElementById('userEmail').textContent = currentSession.user.email;
+  document.getElementById('movieTitle').textContent = w.film_name.toUpperCase();
+  document.getElementById('movieSub').textContent =
+    `${w.theatre_names.join(' · ')} · ${w.format}`;
+  showView('viewWatcher');
+  fetchLive();
 }
 
 async function fetchLive() {
-  const entry = currentEntry();
-  if (!entry) { loadMock(); return; }
-  state.loading = true; render();
-  try {
-    const res = await fetch(`${API_PROXY}?filmId=${entry.filmId}&theatreId=${entry.theatreId}&language=en`);
-    if (res.status === 429) throw new Error('rate-limited');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    // Function now returns a flat array of pre-filtered sessions
-    const raw = await res.json();
-    const sessions = (Array.isArray(raw) ? raw : []).filter(sess => {
-      if (!sess.isBookable) return false;
-      if (watch.format !== 'Standard' && !String(sess.experienceName).toUpperCase().includes(watch.format.toUpperCase())) return false;
-      return true;
-    }).map(sess => {
-      const dt = new Date(sess.showStartDateTime);
-      return {
-        id:      String(sess.vistaSessionId),
-        date:    dt.toISOString().slice(0, 10),
-        time:    dt.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
-        fmt:     sess.experienceName,
-        seats:   sess.seatsRemaining,
-        soldOut: sess.isSoldOut,
-        bookable:true,
-        url:     sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
-        posted:  Date.now(),
-      };
-    });
-    const prevIds = new Set(state.sessions.map(s=>s.id));
-    state.sessions = sessions;
-    state.newIds = sessions.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
-    state.newBannerDismissed = false;
-    state.error = null;
-    state.isLive = true;
-    state.lastChecked = Date.now();
-    state.cooldownUntil = Date.now() + 60000;
-  } catch(e) {
-    state.error = { at: state.lastChecked, msg: e.message };
-    state.isLive = false;
+  const w = currentWatch;
+  if (!w) return;
+  watcherState.loading = true; render();
+
+  const allSessions = [];
+  let anyError = false;
+
+  for (const theatreId of w.theatre_ids) {
+    try {
+      const res = await fetch(`${API_PROXY}?filmId=${w.film_id}&theatreId=${theatreId}&language=en`);
+      if (!res.ok) { anyError = true; continue; }
+      const raw = await res.json();
+      const filtered = (Array.isArray(raw) ? raw : []).filter(sess => {
+        if (!sess.isBookable) return false;
+        if (w.format !== 'Standard' && !String(sess.experienceName).toUpperCase().includes(w.format.toUpperCase())) return false;
+        return true;
+      }).map(sess => {
+        const dt = new Date(sess.showStartDateTime);
+        return {
+          id:      String(sess.vistaSessionId),
+          date:    dt.toISOString().slice(0,10),
+          time:    dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+          fmt:     sess.experienceName,
+          seats:   sess.seatsRemaining,
+          soldOut: sess.isSoldOut,
+          bookable:true,
+          url:     sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
+          posted:  Date.now(),
+        };
+      });
+      allSessions.push(...filtered);
+    } catch(e) { anyError = true; }
   }
-  state.loading = false;
+
+  const prevIds = new Set(watcherState.sessions.map(s=>s.id));
+  watcherState.sessions = allSessions;
+  watcherState.newIds   = allSessions.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
+  watcherState.newBannerDismissed = false;
+  watcherState.error    = anyError ? { at:watcherState.lastChecked, msg:'Some theatres could not be reached' } : null;
+  watcherState.isLive   = !anyError || allSessions.length > 0;
+  watcherState.lastChecked  = Date.now();
+  watcherState.cooldownUntil = Date.now() + 60000;
+  watcherState.loading  = false;
   render();
 }
 
-/* ── Refresh ────────────────────────────────────────── */
-function onRefresh() { doRefresh(false); }
-function doRefresh(auto) {
-  if (state.loading) return;
-  if (Date.now() < state.cooldownUntil) return;
-  if (auto && document.visibilityState==='hidden') return;
-  if (USE_LIVE_API) { fetchLive(); return; }
-  // Mock: simulate seat changes + occasional new session
-  state.loading = true; render();
-  setTimeout(() => {
-    if (Math.random() < 0.1) {
-      state.error = { at: state.lastChecked, msg:'simulated error' };
-      state.cooldownUntil = Date.now() + 60000;
-    } else {
-      const prevIds = new Set(state.sessions.map(s=>s.id));
-      const list = state.sessions.map(s=>({...s}));
-      const open = list.filter(s=>!s.soldOut);
-      if (open.length) {
-        const t = list.find(s=>s.id===open[Math.floor(Math.random()*open.length)].id);
-        t.seats = Math.max(0, t.seats - (2 + Math.floor(Math.random()*5)));
-        if (t.seats===0) t.soldOut = true;
-      }
-      if (Math.random() < 0.35) {
-        const dates=['2026-07-24','2026-07-25','2026-07-26'];
-        const times=['01:15 PM','04:30 PM','09:45 PM'];
-        list.push({
-          id:'VS'+Math.floor(100000+Math.random()*900000),
-          date:dates[Math.floor(Math.random()*dates.length)],
-          time:times[Math.floor(Math.random()*times.length)],
-          fmt:'IMAX, Laser Projection',
-          seats:40+Math.floor(Math.random()*80),
-          soldOut:false, bookable:true,
-          url:'https://www.cineplex.com/', posted:Date.now()
-        });
-      }
-      state.sessions = list;
-      state.newIds = list.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
-      state.newBannerDismissed = false;
-      state.error = null;
-      state.lastChecked = Date.now();
-      state.cooldownUntil = Date.now() + 60000;
-    }
-    state.loading = false;
-    render();
-  }, 600);
+function onRefresh() {
+  if (watcherState.loading || Date.now() < watcherState.cooldownUntil) return;
+  fetchLive();
 }
 
-function dismissNewBanner() { state.newBannerDismissed = true; render(); }
+function dismissNewBanner() { watcherState.newBannerDismissed = true; render(); }
 
 function toggleTheme() {
-  state.theme = state.theme==='dark' ? 'light' : 'dark';
-  document.getElementById('app').setAttribute('data-theme', state.theme);
-  document.getElementById('btnTheme').textContent = state.theme==='dark' ? 'Light' : 'Dark';
+  watcherState.theme = watcherState.theme === 'dark' ? 'light' : 'dark';
+  document.getElementById('app').setAttribute('data-theme', watcherState.theme);
+  document.getElementById('btnTheme').textContent = watcherState.theme === 'dark' ? 'Light' : 'Dark';
 }
 
 /* ── Render helpers ─────────────────────────────────── */
@@ -586,7 +727,7 @@ function parseTime(s) {
   const d=new Date(s.date+'T00:00:00'); d.setHours(h,m); return d.getTime();
 }
 function fmtPosted(t,now) {
-  const ms=Math.max(0,now-t), days=Math.floor(ms/86400000);
+  const ms=Math.max(0,now-t),days=Math.floor(ms/86400000);
   const hrs=((ms-days*86400000)/3600000).toFixed(1);
   return days>0?`${days}d ${hrs}h ago`:`${hrs}h ago`;
 }
@@ -597,15 +738,12 @@ function pill(cls,txt)  { return `<span class="pill ${cls}">${txt}</span>`; }
 
 /* ── Render ─────────────────────────────────────────── */
 function render() {
-  const s = state;
+  const s   = watcherState;
   const now = s.nowTick;
-  const cooldownLeft = Math.max(0, Math.ceil((s.cooldownUntil - now) / 1000));
+  const cooldownLeft = Math.max(0, Math.ceil((s.cooldownUntil - now)/1000));
   const refreshDisabled = s.loading || cooldownLeft > 0;
   const rows = [...s.sessions].sort((a,b)=>parseTime(a)-parseTime(b));
   const count = rows.length;
-
-  document.getElementById('movieTitle').textContent = watch.film.toUpperCase();
-  document.getElementById('movieSub').textContent   = `${watch.theatre} · ${watch.format}`;
 
   document.getElementById('statusDot').className = 'dot'+(count===0?' inactive':'');
   document.getElementById('statusText').textContent = count===0
@@ -613,8 +751,8 @@ function render() {
     : `Available — ${count} session${count!==1?'s':''}`;
 
   const badge = document.getElementById('dataBadge');
-  if (s.isLive) { badge.textContent='Live'; badge.className='data-badge live'; }
-  else          { badge.textContent='Demo'; badge.className='data-badge mock'; }
+  badge.textContent = s.isLive ? 'Live' : 'Error';
+  badge.className = 'data-badge ' + (s.isLive ? 'live' : 'mock');
 
   document.getElementById('lastChecked').textContent =
     'LAST CHECKED '+new Date(s.lastChecked).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
@@ -626,7 +764,7 @@ function render() {
   const errEl = document.getElementById('errorBanner');
   if (s.error) {
     errEl.style.display='block';
-    errEl.textContent=`Could not reach Cineplex API — last data from ${new Date(s.error.at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}.`;
+    errEl.textContent=`${s.error.msg} — last data from ${new Date(s.error.at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}.`;
   } else { errEl.style.display='none'; }
 
   const newEl = document.getElementById('newBanner');
@@ -637,12 +775,12 @@ function render() {
   } else { newEl.style.display='none'; }
 
   document.getElementById('summaryRow').innerHTML = count===0
-    ? `<div class="zero-state">No ${watch.format} sessions found at this time.</div>`
+    ? `<div class="zero-state">No ${currentWatch?.format || ''} sessions found at this time.</div>`
     : `<div class="summary-label">Matching Screenings</div><div class="summary-count">${count}</div>`;
 
   document.getElementById('sessionsView').innerHTML = count===0 ? '' :
     `<div class="ticket-grid">${rows.map(s=>{
-      const isNew=state.newIds.includes(s.id), isLow=!s.soldOut&&s.seats<=20;
+      const isNew=watcherState.newIds.includes(s.id), isLow=!s.soldOut&&s.seats<=20;
       return `<div class="ticket ${borderClass(s)}${s.soldOut?' sold-out':''}${isNew?' is-new':''}"
                    onclick="${s.soldOut?'':  `window.open('${s.url}','_blank')`}">
         <div class="ticket-top-row">
@@ -661,10 +799,31 @@ function render() {
 }
 
 /* ── Init ───────────────────────────────────────────── */
-loadSessions();
-setInterval(()=>{ state.nowTick=Date.now(); render(); }, 1000);
-setInterval(()=>doRefresh(true), 300000);
-window.addEventListener('resize', render);
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { showView('viewAuth'); return; }
+  currentSession = session;
+
+  const watch = await loadSavedWatch();
+  if (watch) {
+    currentWatch = watch;
+    startWatcher();
+  } else {
+    showView('viewSetup');
+  }
+}
+
+// Keep cooldown ticker running
+setInterval(()=>{ watcherState.nowTick=Date.now(); if(document.getElementById('viewWatcher').style.display!=='none') render(); }, 1000);
+// Auto-poll every 5 min while watcher is visible
+setInterval(()=>{
+  if(document.getElementById('viewWatcher').style.display==='none') return;
+  if(document.visibilityState==='hidden') return;
+  if(Date.now() < watcherState.cooldownUntil) return;
+  fetchLive();
+}, 300000);
+
+init();
 </script>
 </body>
 </html>

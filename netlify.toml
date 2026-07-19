@@ -2,6 +2,9 @@
   publish   = "."
   functions = "netlify/functions"
 
+[functions."poll"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/*.html"
   [headers.values]
