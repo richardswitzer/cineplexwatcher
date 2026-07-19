@@ -39,6 +39,36 @@ function decompress(raw, encoding) {
   });
 }
 
+// Slim down the Cineplex response to just what the UI needs.
+// Returns an array of flat session objects for the requested theatre/film.
+function extractSessions(data, filmId, theatreId) {
+  const arr = Array.isArray(data) ? data : Object.values(data);
+  const sessions = [];
+  for (const theatreEntry of arr) {
+    if (String(theatreEntry.theatreId) !== String(theatreId)) continue;
+    for (const dateEntry of theatreEntry.dates || []) {
+      for (const movie of dateEntry.movies || []) {
+        if (String(movie.filmId) !== String(filmId) && String(movie.id) !== String(filmId)) continue;
+        for (const exp of movie.experiences || []) {
+          const expName = (exp.experienceTypes || []).join(', ') || movie.presentationType || '';
+          for (const sess of exp.sessions || []) {
+            sessions.push({
+              vistaSessionId:    sess.vistaSessionId,
+              showStartDateTime: sess.showStartDateTime,
+              experienceName:    expName,
+              seatsRemaining:    sess.seatsRemaining,
+              isSoldOut:         sess.isSoldOut,
+              isBookable:        sess.isShowtimeEnabledOnline,
+              ticketingRedesignUrl: sess.ticketingRedesignUrl || null,
+            });
+          }
+        }
+      }
+    }
+  }
+  return sessions;
+}
+
 exports.handler = async function (event) {
   const { filmId, theatreId, language = 'en' } = event.queryStringParameters || {};
 
@@ -62,9 +92,8 @@ exports.handler = async function (event) {
   if (status === 429) return { statusCode: 429, body: JSON.stringify({ error: 'Rate limited by Cineplex API' }) };
   if (status !== 200) return { statusCode: status, body: JSON.stringify({ error: `Cineplex API returned ${status}` }) };
 
-  // Try declared encoding first, then fall back to trying gunzip, then raw
-  let body;
   const encoding = (headers['content-encoding'] || '').toLowerCase();
+  let body;
   try {
     const buf = await decompress(raw, encoding || 'gzip');
     body = buf.toString('utf-8');
@@ -77,9 +106,18 @@ exports.handler = async function (event) {
     }
   }
 
+  let parsed;
+  try {
+    parsed = JSON.parse(body);
+  } catch (err) {
+    return { statusCode: 502, body: JSON.stringify({ error: 'Invalid JSON from Cineplex API', sample: body.slice(0, 200) }) };
+  }
+
+  const sessions = extractSessions(parsed, filmId, theatreId);
+
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-    body,
+    body: JSON.stringify(sessions),
   };
 };

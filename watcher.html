@@ -484,36 +484,26 @@ async function fetchLive() {
     const res = await fetch(`${API_PROXY}?filmId=${entry.filmId}&theatreId=${entry.theatreId}&language=en`);
     if (res.status === 429) throw new Error('rate-limited');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    // Normalise Cineplex response shape
-    const arr = Array.isArray(data) ? data : Object.values(data);
-    const theatreEntry = arr.find(t => String(t.theatreId) === String(entry.theatreId));
-    const sessions = [];
-    if (theatreEntry) {
-      for (const dateEntry of theatreEntry.dates || []) {
-        for (const movie of dateEntry.movies || []) {
-          for (const exp of movie.experiences || []) {
-            const expName = (exp.experienceTypes || []).join(', ') || movie.presentationType;
-            if (watch.format !== 'Standard' && !expName.toUpperCase().includes(watch.format.toUpperCase())) continue;
-            for (const sess of exp.sessions || []) {
-              if (!sess.isShowtimeEnabledOnline) continue;
-              const dt = new Date(sess.showStartDateTime);
-              sessions.push({
-                id:       String(sess.vistaSessionId),
-                date:     dt.toISOString().slice(0,10),
-                time:     dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
-                fmt:      expName,
-                seats:    sess.seatsRemaining,
-                soldOut:  sess.isSoldOut,
-                bookable: true,
-                url:      sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
-                posted:   Date.now(),
-              });
-            }
-          }
-        }
-      }
-    }
+    // Function now returns a flat array of pre-filtered sessions
+    const raw = await res.json();
+    const sessions = (Array.isArray(raw) ? raw : []).filter(sess => {
+      if (!sess.isBookable) return false;
+      if (watch.format !== 'Standard' && !String(sess.experienceName).toUpperCase().includes(watch.format.toUpperCase())) return false;
+      return true;
+    }).map(sess => {
+      const dt = new Date(sess.showStartDateTime);
+      return {
+        id:      String(sess.vistaSessionId),
+        date:    dt.toISOString().slice(0, 10),
+        time:    dt.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}),
+        fmt:     sess.experienceName,
+        seats:   sess.seatsRemaining,
+        soldOut: sess.isSoldOut,
+        bookable:true,
+        url:     sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
+        posted:  Date.now(),
+      };
+    });
     const prevIds = new Set(state.sessions.map(s=>s.id));
     state.sessions = sessions;
     state.newIds = sessions.filter(s=>!prevIds.has(s.id)).map(s=>s.id);
