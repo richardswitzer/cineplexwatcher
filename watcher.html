@@ -593,9 +593,19 @@ function renderFormatChips(formats) {
   const row = document.getElementById('formatRow');
   row.innerHTML = [{ label: 'Any format', match: '' }, ...chips].map((c, i) =>
     `<button class="format-btn${i === 0 ? ' selected' : ''}" data-match="${c.match}"
-      onclick="selectFormat(this, '${c.match}')">${c.label}</button>`
+      onclick="selectFormat(this, '${c.label === 'Any format' ? '' : c.label}')">${c.label}</button>`
   ).join('');
   selectedFormat = ''; // default: any format
+}
+
+// Normalize a saved format string to a short keyword for robust matching
+function normalizeFormat(fmt) {
+  if (!fmt) return '';
+  const KEYWORDS = ['IMAX', 'VIP', 'ULTRAScreen', 'D-BOX', 'Standard', 'ScreenX', '4DX'];
+  for (const k of KEYWORDS) {
+    if (fmt.toUpperCase().includes(k.toUpperCase())) return k;
+  }
+  return fmt.split(',')[0].trim();
 }
 
 function renderTheatreList(theatres) {
@@ -728,6 +738,7 @@ async function fetchLive() {
   let anyError = false;
   const firstSeen = JSON.parse(localStorage.getItem('cpx_first_seen') || '{}');
   const now = Date.now();
+  const formatFilter = normalizeFormat(w.format);
 
   for (const theatreId of w.theatre_ids) {
     try {
@@ -736,7 +747,7 @@ async function fetchLive() {
       const raw = await res.json();
       const filtered = (Array.isArray(raw) ? raw : []).filter(sess => {
         if (!sess.isBookable) return false;
-        if (w.format !== 'Standard' && !String(sess.experienceName).toUpperCase().includes(w.format.toUpperCase())) return false;
+        if (formatFilter && !String(sess.experienceName).toUpperCase().includes(formatFilter.toUpperCase())) return false;
         return true;
       }).map(sess => {
         const id = String(sess.vistaSessionId);
