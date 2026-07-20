@@ -227,6 +227,11 @@ button { font-family: inherit; cursor: pointer; }
   background:var(--amber); color:var(--onAmber); font-weight:600;
   display:flex; justify-content:space-between; align-items:center;
 }
+.banner-phone {
+  background:var(--surface); border:1px solid var(--amber);
+  color:var(--text); display:flex; flex-direction:column; gap:.65rem;
+}
+.phone-banner-row { display:flex; gap:.65rem; align-items:center; }
 .banner-dismiss {
   background:none; border:none; color:inherit;
   font-size:1.1rem; cursor:pointer; line-height:1; padding:0 .25rem;
@@ -380,6 +385,14 @@ button { font-family: inherit; cursor: pointer; }
 
       <div class="divider"></div>
 
+      <div id="phoneBanner" class="banner banner-phone" style="display:none">
+        <span>No SMS number saved — add one to receive alerts:</span>
+        <div class="phone-banner-row">
+          <input class="auth-input" type="tel" id="phoneBannerInput" placeholder="+1 416 555 0100" style="flex:1;margin:0">
+          <button class="btn btn-apply" onclick="savePhone()">Save</button>
+        </div>
+      </div>
+
       <div id="errorBanner" class="banner banner-error" style="display:none"></div>
       <div id="newBanner" class="banner banner-new" style="display:none">
         <span id="newBannerText"></span>
@@ -461,6 +474,25 @@ async function signOut() {
   await sb.auth.signOut();
   currentSession = null; currentWatch = null;
   showView('viewAuth');
+}
+
+async function savePhone() {
+  const phone = document.getElementById('phoneBannerInput').value.trim();
+  if (!phone) return;
+  await fetch(WATCH_API, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', Authorization:`Bearer ${currentSession.access_token}` },
+    body: JSON.stringify({
+      film_id:       currentWatch.film_id,
+      film_name:     currentWatch.film_name,
+      theatre_ids:   currentWatch.theatre_ids,
+      theatre_names: currentWatch.theatre_names,
+      format:        currentWatch.format,
+      phone,
+    }),
+  });
+  currentWatch.phone = phone;
+  document.getElementById('phoneBanner').style.display = 'none';
 }
 
 async function confirmReset() {
@@ -661,6 +693,7 @@ function startWatcher() {
   document.getElementById('movieSub').textContent =
     `${w.theatre_names.join(' · ')} · ${w.format}`;
   showView('viewWatcher');
+  document.getElementById('phoneBanner').style.display = w.phone ? 'none' : 'flex';
   fetchLive();
 }
 
