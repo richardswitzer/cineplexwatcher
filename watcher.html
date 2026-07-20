@@ -148,6 +148,10 @@ button { font-family: inherit; cursor: pointer; }
 
 .phone-row { display:flex; flex-direction:column; gap:.4rem; }
 .phone-hint { font-size:.72rem; color:var(--text3); }
+.phone-prefix-wrap { display:flex; align-items:center; border-bottom:1px solid var(--rule); transition:border-color .15s; }
+.phone-prefix-wrap:focus-within { border-bottom-color:var(--amber); }
+.phone-prefix-wrap .auth-input { border-bottom:none; flex:1; padding-left:.2rem; }
+.phone-prefix { font-size:.9rem; color:var(--text2); white-space:nowrap; user-select:none; }
 
 /* ── User bar ───────────────────────────────── */
 .user-bar {
@@ -347,8 +351,11 @@ button { font-family: inherit; cursor: pointer; }
       <div class="setup-section" id="phoneSection" style="display:none">
         <div class="setup-section-title">4 · SMS number <span style="color:var(--text3);font-weight:normal">(optional)</span></div>
         <div class="phone-row">
-          <input class="auth-input" type="tel" id="phoneInput" placeholder="+1 416 555 0100" autocomplete="tel">
-          <div class="phone-hint">Include country code. Leave blank to skip SMS alerts.</div>
+          <div class="phone-prefix-wrap">
+            <span class="phone-prefix">+1</span>
+            <input class="auth-input" type="tel" id="phoneInput" placeholder="416 555 0100" autocomplete="tel">
+          </div>
+          <div class="phone-hint">Leave blank to skip SMS alerts.</div>
         </div>
       </div>
 
@@ -392,7 +399,10 @@ button { font-family: inherit; cursor: pointer; }
       <div id="phoneBanner" class="banner banner-phone" style="display:none">
         <span>No SMS number saved — add one to receive alerts:</span>
         <div class="phone-banner-row">
-          <input class="auth-input" type="tel" id="phoneBannerInput" placeholder="+1 416 555 0100" style="flex:1;margin:0">
+          <div class="phone-prefix-wrap" style="flex:1">
+            <span class="phone-prefix">+1</span>
+            <input class="auth-input" type="tel" id="phoneBannerInput" placeholder="416 555 0100" style="border-bottom:none;margin:0">
+          </div>
           <button class="btn btn-apply" onclick="savePhone()">Save</button>
         </div>
       </div>
@@ -481,7 +491,7 @@ async function signOut() {
 }
 
 async function savePhone() {
-  const phone = document.getElementById('phoneBannerInput').value.trim();
+  const phone = normalizePhone(document.getElementById('phoneBannerInput').value);
   if (!phone) return;
   await fetch(WATCH_API, {
     method: 'POST',
@@ -601,6 +611,12 @@ function renderFormatChips(formats) {
   selectedFormat = ''; // default: any format
 }
 
+function normalizePhone(raw) {
+  const digits = (raw || '').replace(/\D/g, '');
+  const local = digits.startsWith('1') && digits.length === 11 ? digits.slice(1) : digits;
+  return local.length >= 10 ? `+1${local}` : '';
+}
+
 // Normalize a saved format string to a short keyword for robust matching
 function normalizeFormat(fmt) {
   if (!fmt) return '';
@@ -684,7 +700,7 @@ async function saveWatch() {
   if (!parsedFilmId)              return showSetupError('Paste a Cineplex film URL first.');
   if (!selectedTheatreIds.length) return showSetupError('Select at least one theatre.');
 
-  const phone = document.getElementById('phoneInput').value.trim() || null;
+  const phone = normalizePhone(document.getElementById('phoneInput').value) || null;
   const btn   = document.getElementById('btnSaveWatch');
   btn.disabled = true; btn.textContent = 'Saving…';
 
