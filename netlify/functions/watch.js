@@ -49,7 +49,7 @@ exports.handler = async function (event) {
       try {
         const magicLink = await generateMagicLink(user.email);
         await sendSms(phone,
-          `Thanks for signing up for Watchr.ca. We will send you one SMS alert when any new screenings appear for your selected film/preferences. Log in to your account anytime with your magic link: ${magicLink}`
+          `Thanks for signing up for Watchr.ca. We will send you one SMS alert when any new screenings appear for your selected film/preferences. Log in to your account anytime at: ${magicLink}`
         );
       } catch (err) {
         console.error('watch: confirmation SMS failed:', err.message);

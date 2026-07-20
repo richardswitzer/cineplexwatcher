@@ -96,7 +96,7 @@ async function generateMagicLink(email) {
     body: {
       type: 'magiclink',
       email,
-      options: { redirect_to: 'https://cineplexwatcher.netlify.app/watcher.html' },
+      options: { redirect_to: 'https://watchr.ca/watcher.html' },
     },
   });
   if (status !== 200) throw new Error(`generateMagicLink failed: ${status}`);
