@@ -18,6 +18,7 @@ button { font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion:reduce) { :root { --pulse-dur:0s; --flash-dur:0s; --panel-dur:0s; } }
 @keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes flashNew { 0%{background:rgba(212,160,32,.18)} 100%{background:transparent} }
+@keyframes recentGlow { 0%,100%{box-shadow:0 0 0 2px var(--amber)} 50%{box-shadow:0 0 10px 3px rgba(212,160,32,.25)} }
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* ── Tokens ─────────────────────────────────── */
@@ -268,6 +269,7 @@ button { font-family: inherit; cursor: pointer; }
 .ticket.sold-out { opacity:.45; cursor:default; }
 .ticket:not(.sold-out):hover { outline:1px solid var(--amber); }
 .ticket.is-new { animation:flashNew var(--flash-dur) ease-out; }
+.ticket.is-recent { box-shadow:0 0 0 2px var(--amber); animation:recentGlow 2s ease-in-out infinite; }
 .ticket-top-row { display:flex; align-items:center; gap:.5rem; justify-content:space-between; }
 .ticket-date { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--text2); font-variant-numeric:tabular-nums; }
 .ticket-time { font-family:'JetBrains Mono',monospace; font-size:1.35rem; font-weight:600; font-variant-numeric:tabular-nums; }
@@ -822,7 +824,7 @@ function render() {
   const now = s.nowTick;
   const cooldownLeft = Math.max(0, Math.ceil((s.cooldownUntil - now)/1000));
   const refreshDisabled = s.loading || cooldownLeft > 0;
-  const rows = [...s.sessions].sort((a,b)=>parseTime(a)-parseTime(b));
+  const rows = [...s.sessions].sort((a,b)=>parseTime(b)-parseTime(a));
   const count = rows.length;
 
   document.getElementById('statusDot').className = 'dot'+(count===0?' inactive':'');
@@ -861,7 +863,8 @@ function render() {
   document.getElementById('sessionsView').innerHTML = count===0 ? '' :
     `<div class="ticket-grid">${rows.map(s=>{
       const isNew=watcherState.newIds.includes(s.id), isLow=!s.soldOut&&s.seats<=20;
-      return `<div class="ticket ${borderClass(s)}${s.soldOut?' sold-out':''}${isNew?' is-new':''}"
+      const isRecent=now-s.posted < 4*3600*1000;
+      return `<div class="ticket ${borderClass(s)}${s.soldOut?' sold-out':''}${isNew?' is-new':''}${isRecent?' is-recent':''}"
                    onclick="${s.soldOut?'':  `window.open('${s.url}','_blank')`}">
         <div class="ticket-top-row">
           <span class="ticket-date">${fmtDate(s.date)}</span>
