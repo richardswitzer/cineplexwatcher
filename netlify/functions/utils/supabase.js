@@ -90,4 +90,17 @@ async function deleteWatch(userId) {
   );
 }
 
-module.exports = { getUser, getWatch, getAllWatches, upsertWatch, patchWatch, deleteWatch };
+async function generateMagicLink(email) {
+  const { status, data } = await supabaseRequest('POST', '/auth/v1/admin/generate_link', {
+    useServiceKey: true,
+    body: {
+      type: 'magiclink',
+      email,
+      options: { redirect_to: 'https://cineplexwatcher.netlify.app/watcher.html' },
+    },
+  });
+  if (status !== 200) throw new Error(`generateMagicLink failed: ${status}`);
+  return data.action_link;
+}
+
+module.exports = { getUser, getWatch, getAllWatches, upsertWatch, patchWatch, deleteWatch, generateMagicLink };
