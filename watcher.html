@@ -133,6 +133,7 @@ button { font-family: inherit; cursor: pointer; }
 .theatre-item-name { font-size:.88rem; }
 .theatre-hint { font-size:.72rem; color:var(--text3); margin-top:.35rem; }
 .theatre-loading { font-size:.8rem; color:var(--text2); padding:.5rem 0; }
+.theatre-divider { font-size:.68rem; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; padding:.6rem .75rem .3rem; border-top:1px solid var(--rule); margin-top:.4rem; }
 
 .format-row { display:flex; gap:.5rem; flex-wrap:wrap; }
 .format-btn {
@@ -599,13 +600,33 @@ function renderFormatChips(formats) {
 
 function renderTheatreList(theatres) {
   const list = document.getElementById('theatreList');
-  list.innerHTML = theatres.map(t => `
-    <label class="theatre-item" id="ti-${t.theatreId}">
+  const saved = JSON.parse(localStorage.getItem('cpx_saved_theatres') || '[]');
+  const savedSet = new Set(saved);
+
+  const savedTheatres = theatres.filter(t => savedSet.has(t.theatreId));
+  const otherTheatres = theatres.filter(t => !savedSet.has(t.theatreId));
+
+  // Pre-select previously chosen theatres (up to 5)
+  selectedTheatreIds   = savedTheatres.slice(0,5).map(t => t.theatreId);
+  selectedTheatreNames = savedTheatres.slice(0,5).map(t => t.name);
+
+  const itemHtml = (t, preChecked) => `
+    <label class="theatre-item${preChecked?' selected':''}" id="ti-${t.theatreId}">
       <input type="checkbox" value="${t.theatreId}" data-name="${t.name.replace(/"/g,'&quot;')}"
-        onchange="onTheatreCheck(this)">
+        onchange="onTheatreCheck(this)"${preChecked?' checked':''}>
       <span class="theatre-item-name">${t.name}</span>
-    </label>
-  `).join('');
+    </label>`;
+
+  let html = savedTheatres.map(t => itemHtml(t, true)).join('');
+  if (savedTheatres.length > 0 && otherTheatres.length > 0) {
+    html += '<div class="theatre-divider">Other theatres</div>';
+  }
+  html += otherTheatres.map(t => itemHtml(t, false)).join('');
+  list.innerHTML = html;
+
+  document.getElementById('theatreHint').textContent =
+    selectedTheatreIds.length === 0 ? 'Select up to 5 theatres to monitor.'
+    : `${selectedTheatreIds.length}/5 selected`;
 }
 
 function onTheatreCheck(cb) {
@@ -621,6 +642,7 @@ function onTheatreCheck(cb) {
     if (i !== -1) { selectedTheatreIds.splice(i,1); selectedTheatreNames.splice(i,1); }
     cb.closest('.theatre-item').classList.remove('selected');
   }
+  localStorage.setItem('cpx_saved_theatres', JSON.stringify(selectedTheatreIds));
   document.getElementById('theatreHint').textContent =
     selectedTheatreIds.length === 0 ? 'Select up to 5 theatres to monitor.'
     : `${selectedTheatreIds.length}/5 selected`;
@@ -704,6 +726,8 @@ async function fetchLive() {
 
   const allSessions = [];
   let anyError = false;
+  const firstSeen = JSON.parse(localStorage.getItem('cpx_first_seen') || '{}');
+  const now = Date.now();
 
   for (const theatreId of w.theatre_ids) {
     try {
@@ -715,9 +739,11 @@ async function fetchLive() {
         if (w.format !== 'Standard' && !String(sess.experienceName).toUpperCase().includes(w.format.toUpperCase())) return false;
         return true;
       }).map(sess => {
+        const id = String(sess.vistaSessionId);
+        if (!firstSeen[id]) firstSeen[id] = now;
         const dt = new Date(sess.showStartDateTime);
         return {
-          id:      String(sess.vistaSessionId),
+          id,
           date:    dt.toISOString().slice(0,10),
           time:    dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
           fmt:     sess.experienceName,
@@ -725,12 +751,13 @@ async function fetchLive() {
           soldOut: sess.isSoldOut,
           bookable:true,
           url:     sess.ticketingRedesignUrl || 'https://www.cineplex.com/',
-          posted:  Date.now(),
+          posted:  firstSeen[id],
         };
       });
       allSessions.push(...filtered);
     } catch(e) { anyError = true; }
   }
+  localStorage.setItem('cpx_first_seen', JSON.stringify(firstSeen));
 
   const prevIds = new Set(watcherState.sessions.map(s=>s.id));
   watcherState.sessions = allSessions;
